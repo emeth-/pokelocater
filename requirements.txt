@@ -1,0 +1,13 @@
+Django==1.8
+dj-database-url==0.3.0
+dj-static==0.0.6
+gunicorn==19.1.1
+psycopg2==2.5.1
+static==0.4
+wsgiref==0.1.2
+django-cors-headers==1.1.0
+whitenoise==1.0.5
+s2sphere==0.2.4
+geopy==1.11.0
+requests==2.9.1
+protobuf==2.6.1

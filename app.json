@@ -1,0 +1,13 @@
+{
+  "env": {
+    "IS_HEROKU_SERVER": "1"
+  },
+  "addons": [
+    "papertrail",
+    "heroku-postgresql:hobby-dev"
+  ],
+  "success_url": "/",
+  "scripts": {
+    "postdeploy": "python manage.py migrate"
+  }
+}
