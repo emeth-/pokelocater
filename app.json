@@ -1,6 +1,8 @@
 {
   "env": {
-    "IS_HEROKU_SERVER": "1"
+    "IS_HEROKU_SERVER": "1",
+    "PTC_USERNAME": "my_pokeclub_username",
+    "PTC_PASSWORD": "my_pokeclub_password"
   },
   "addons": [
     "papertrail",

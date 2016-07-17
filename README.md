@@ -1,4 +1,4 @@
-Hackathon-kit
+PokeLocator
 ===========
 
 [![Deploy](https://www.herokucdn.com/deploy/button.png)](https://heroku.com/deploy)
@@ -14,7 +14,8 @@ Hackathon-kit
 ```
 <clone our app to a local git repository>
 $ sudo pip install -r requirements.txt
-$ heroku apps:create hackathon-demo 
+$ heroku apps:create pokelocator-demo
+$ heroku config:set IS_HEROKU_SERVER=1
 $ heroku config:set PTC_USERNAME=my_pokeclub_username
 $ heroku config:set PTC_PASSWORD=my_pokeclub_password
 $ git push heroku master
@@ -46,3 +47,6 @@ Visit http://127.0.0.1:8000/admin/
 
 Sign up for a poke club account here (that where the PTC_USERNAME and PTC_PASSWORD come from):
 https://club.pokemon.com/us/pokemon-trainer-club/sign-up/
+
+Pokelocator api from:
+https://github.com/leegao/pokemongo-api-demo/tree/simulation
