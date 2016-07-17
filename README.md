@@ -5,8 +5,6 @@ PokeLocator
 
 - [Optional] Sign up for a google account as well to use as a fallback for when poke club authentication is down (frequently happens). Input this username/password into the environment variables GOOG_USERNAME and GOOG_PASSWORD.
 
-- Note that you will need to view the "https" and not "http" version of your herokuapp for most browsers to allow the code to request your location.
-
 ### Setup on Heroku with button deploy
 
 - Click the DEPLOY Heroku button below to build the app in the cloud for free (requires Heroku account).
@@ -33,14 +31,24 @@ $ heroku config:set GOOG_PASSWORD=my_google_password
 $ git push heroku master
 ```
 
+Now visit your heroku app url in the browser.
+
 ### Setup locally
 ```
-$ python manage.py runserver
-Visit http://127.0.0.1:8000/static/map.html
+- Install git
+- Install python 2.7.6
+- Install pip (e.g. sudo easy_install pip)
 ```
+
+```
+$ sudo pip install -r requirements.txt
+$ python manage.py runserver
+Visit http://127.0.0.1:8000/
+```
+
+### Notes
+- Note that you will need to view the "https" and not "http" version of your herokuapp for most browsers to allow the code to request your location.
+- Get an email from gmail saying someone attempted to login to your account from virginia (or wherever)? That would be this app. If you deployed to heroku, then your heroku cloud instance IS logging into your gmail account. You are not getting hacked, if you are worried you can review the code [here](https://github.com/emeth-/pokelocater/blob/master/api/pokelocator_api.py#L167), please don't send me threats.
 
 Pokelocator api from:
 https://github.com/leegao/pokemongo-api-demo/tree/simulation
-
-TODO
-- cache auth token somewhere until it expires
