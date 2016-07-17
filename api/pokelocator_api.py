@@ -81,7 +81,7 @@ def set_location_coords(lat, long, alt):
 def get_location_coords():
     return (COORDS_LATITUDE, COORDS_LONGITUDE, COORDS_ALTITUDE)
 
-def api_req(api_endpoint, access_token, *mehs, **kw):
+def api_req(login_type, api_endpoint, access_token, *mehs, **kw):
     try:
         p_req = pokemon_pb2.RequestEnvelop()
         p_req.rpc_id = 1469378659230941192
@@ -92,14 +92,15 @@ def api_req(api_endpoint, access_token, *mehs, **kw):
 
         p_req.unknown12 = 989
 
-        p_req.auth.token.contents = access_token
-        p_req.auth.token.unknown13 = 14
-        if kw['useauth'] == "ptc":
-            print "...ptc"
-            p_req.auth.provider = 'ptc'
+        if 'useauth' not in kw or not kw['useauth']:
+            print "api_req: login_type", login_type
+            p_req.auth.provider = login_type
+            p_req.auth.token.contents = access_token
+            p_req.auth.token.unknown13 = 14
         else:
-            print "...goog"
-            p_req.auth.provider = 'google'
+            p_req.unknown11.unknown71 = kw['useauth'].unknown71
+            p_req.unknown11.unknown72 = kw['useauth'].unknown72
+            p_req.unknown11.unknown73 = kw['useauth'].unknown73
 
         for meh in mehs:
             p_req.MergeFrom(meh)
@@ -126,7 +127,7 @@ def api_req(api_endpoint, access_token, *mehs, **kw):
             print(e)
         return None
 
-def get_profile(access_token, api, useauth, *reqq):
+def get_profile(login_type, access_token, api, useauth, *reqq):
     req = pokemon_pb2.RequestEnvelop()
 
     req1 = req.requests.add()
@@ -154,10 +155,10 @@ def get_profile(access_token, api, useauth, *reqq):
     if len(reqq) >= 5:
         req5.MergeFrom(reqq[4])
 
-    return api_req(api, access_token, req, useauth = useauth)
+    return api_req(login_type, api, access_token, req, useauth = useauth)
 
-def get_api_endpoint(access_token, api = API_URL, login_type=None):
-    p_ret = get_profile(access_token, api, login_type)
+def get_api_endpoint(login_type, access_token, api = API_URL):
+    p_ret = get_profile(login_type, access_token, api, None)
     try:
         return ('https://%s/rpc' % p_ret.api_url)
     except:
@@ -166,7 +167,6 @@ def get_api_endpoint(access_token, api = API_URL, login_type=None):
 def login_google(email,passw):
     reqses = requests.session()
     reqses.headers.update({'User-Agent':'Niantic App'})
-
     reqses.headers.update({'User-Agent':'Mozilla/5.0 (iPad; CPU OS 8_4 like Mac OS X) AppleWebKit/600.1.4 (KHTML, like Gecko) Mobile/12H143'})
     first='https://accounts.google.com/o/oauth2/auth?client_id=848232511240-73ri3t7plvk96pj4f85uj8otdat2alem.apps.googleusercontent.com&redirect_uri=urn%3Aietf%3Awg%3Aoauth%3A2.0%3Aoob&response_type=code&scope=openid%20email%20https%3A%2F%2Fwww.googleapis.com%2Fauth%2Fuserinfo.email'
     second='https://accounts.google.com/AccountLoginInfo'
@@ -204,13 +204,11 @@ def login_google(email,passw):
     
     profile= re.search('<input id="profile-information" name="ProfileInformation" type="hidden" value=".*">',r1.content)
     gxf= re.search('<input type="hidden" name="gxf" value=".*:.*">',r1.content)
-
     gxf=re.sub('.*value="','',gxf.group(0))
     gxf=re.sub('".*','',gxf)
     
     profile=re.sub('.*value="','',profile.group(0))
     profile=re.sub('".*','',profile)
-
     data2={'Page':'PasswordSeparationSignIn',
             'GALX':GALX,
             'gxf':gxf,
@@ -237,18 +235,14 @@ def login_google(email,passw):
     state_wrapper= re.search('<input id="state_wrapper" type="hidden" name="state_wrapper" value=".*">',r3.content)
     state_wrapper=re.sub('.*state_wrapper" value="','',state_wrapper.group(0))
     state_wrapper=re.sub('"><input type="hidden" .*','',state_wrapper)
-
     connect_approve=re.search('<form id="connect-approve" action=".*" method="POST" style="display: inline;">',r3.content)
     connect_approve=re.sub('.*action="','',connect_approve.group(0))
     connect_approve=re.sub('" me.*','',connect_approve)
-
     data3 = OrderedDict([('bgresponse', 'js_disabled'), ('_utf8', '?'), ('state_wrapper', state_wrapper), ('submit_access', 'true')])
     r4=reqses.post(connect_approve.replace('amp;',''),data=data3)
-
     code= re.search('<input id="code" type="text" readonly="readonly" value=".*" style=".*" onclick=".*;" />',r4.content)
     code=re.sub('.*value="','',code.group(0))
     code=re.sub('" style.*','',code)
-
     data4={'client_id':client_id,
         'client_secret':'NCjF1TLi2CcY6t5mt0ZveuL7',
         'code':code,
@@ -257,7 +251,7 @@ def login_google(email,passw):
         'scope':'openid email https://www.googleapis.com/auth/userinfo.email'}
     r5 = reqses.post(last,data=data4)
     return json.loads(r5.content)['id_token']
-    
+
 
 def login_ptc(username, password):
     print('[!] login for: {}'.format(username))
@@ -314,9 +308,9 @@ def heartbeat(api_endpoint, access_token, response, login_type):
     m.long = COORDS_LONGITUDE
     m1.message = m.SerializeToString()
     response = get_profile(
+        login_type,
         access_token,
         api_endpoint,
-        login_type,
         response.unknown7,
         m1,
         pokemon_pb2.RequestEnvelop.Requests(),
@@ -331,12 +325,11 @@ def heartbeat(api_endpoint, access_token, response, login_type):
 def main(location=None):
     
     pokemons = json.load(open('api/pokemon.json'))
-
     ptc_username = os.environ.get('PTC_USERNAME', "Invalid")
     ptc_password = os.environ.get('PTC_PASSWORD', "Invalid")
             
     set_location(location)
-
+    
     login_type = "ptc"
 
     try:
@@ -352,16 +345,16 @@ def main(location=None):
         goog_password = os.environ.get('GOOG_PASSWORD', "Invalid")
         access_token = login_google(goog_username, goog_password)
         login_type = "google"
-
+        
     print('[+] RPC Session Token: {} ...'.format(access_token[:25]))
 
-    api_endpoint = get_api_endpoint(access_token, login_type=login_type)
+    api_endpoint = get_api_endpoint(login_type, access_token)
     if api_endpoint is None:
         print('[-] RPC server offline')
         return
     print('[+] Received API endpoint: {}'.format(api_endpoint))
 
-    response = get_profile(access_token, api_endpoint, login_type)
+    response = get_profile(login_type, access_token, api_endpoint, None)
     if response is not None:
         print('[+] Login successful')
 
@@ -448,4 +441,3 @@ def main(location=None):
 if __name__ == '__main__':
     main()
     
-
