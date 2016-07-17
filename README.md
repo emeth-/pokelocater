@@ -1,9 +1,12 @@
 PokeLocator
 ===========
 
+Sign up for a poke club account here (that where the PTC_USERNAME and PTC_PASSWORD come from):
+https://club.pokemon.com/us/pokemon-trainer-club/sign-up/
+
 [![Deploy](https://www.herokucdn.com/deploy/button.png)](https://heroku.com/deploy)
 
-##### SETUP
+##### TO SETUP LOCALLY
 ```
 - Install heroku toolbelt (https://toolbelt.heroku.com/)
 - Install git
@@ -21,32 +24,11 @@ $ heroku config:set PTC_PASSWORD=my_pokeclub_password
 $ git push heroku master
 ```
 
-##### Migrations
-Create new migrations
-```
-$ python manage.py makemigrations
-```
-
-Run migrations
-```
-$ python manage.py migrate
-```
-
-##### Run Server
+##### Run Server Locally
 ```
 $ python manage.py runserver
 Visit http://127.0.0.1:8000/static/index.html
 ```
-
-##### Admin Panel
-Create a superuser
-```
-$ python manage.py createsuperuser
-Visit http://127.0.0.1:8000/admin/
-```
-
-Sign up for a poke club account here (that where the PTC_USERNAME and PTC_PASSWORD come from):
-https://club.pokemon.com/us/pokemon-trainer-club/sign-up/
 
 Pokelocator api from:
 https://github.com/leegao/pokemongo-api-demo/tree/simulation
