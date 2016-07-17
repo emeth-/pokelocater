@@ -1,14 +1,17 @@
 PokeLocator
 ===========
 
-Sign up for a poke club account here (that where the PTC_USERNAME and PTC_PASSWORD come from):
-https://club.pokemon.com/us/pokemon-trainer-club/sign-up/
+- Sign up for a poke club account [HERE](https://club.pokemon.com/us/pokemon-trainer-club/sign-up/). Input your username/password into the environment variables PTC_USERNAME and PTC_PASSWORD.
 
-Also can sign up for a google account to use as a fallback for when poke club authentication is down (frequently happens), and input those into GOOG_USERNAME and GOOG_PASSWORD
+- [Optional] Sign up for a google account as well to use as a fallback for when poke club authentication is down (frequently happens). Input this username/password into the environment variables GOOG_USERNAME and GOOG_PASSWORD.
+
+##### Setup on Heroku with button deploy
+
+- Click the DEPLOY Heroku button below to build the app in the cloud for free (requires Heroku account).
 
 [![Deploy](https://www.herokucdn.com/deploy/button.png)](https://heroku.com/deploy)
 
-##### TO SETUP LOCALLY
+##### Setup on Heroku manually
 ```
 - Install heroku toolbelt (https://toolbelt.heroku.com/)
 - Install git
@@ -28,10 +31,10 @@ $ heroku config:set GOOG_PASSWORD=my_google_password
 $ git push heroku master
 ```
 
-##### Run Server Locally
+##### Setup locally
 ```
 $ python manage.py runserver
-Visit http://127.0.0.1:8000/static/index.html
+Visit http://127.0.0.1:8000/static/map.html
 ```
 
 Pokelocator api from:
