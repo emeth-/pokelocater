@@ -42,7 +42,6 @@ function handler(location) {
 		data: { location: location.coords.latitude.toString()+', '+location.coords.longitude.toString() }, 
 		dataType: 'json',
 		success: function (data) {
-			create_map(data.data);
 			console.log("pokemon_data", data.data);
 			markers = [];
 			infoWindowContent = [];
@@ -54,6 +53,7 @@ function handler(location) {
         '<p>will be there for another '+v.time_left+' seconds.</p>' +        '</div>'];
 				infoWindowContent.push(infoWindowContent_obj);
 			});
+			create_map();
 		},
 		fail: function() {
 			alert('Error while attempting to retrieve poke locations');
@@ -61,7 +61,7 @@ function handler(location) {
 	});
 }
 
-function create_map(pokemon_data) {
+function create_map() {
     var map;
     var bounds = new google.maps.LatLngBounds();
     var mapOptions = {
@@ -99,7 +99,7 @@ function create_map(pokemon_data) {
 
     // Override our map zoom level once our fitBounds function runs (Make sure it only runs once)
     var boundsListener = google.maps.event.addListener((map), 'bounds_changed', function(event) {
-        this.setZoom(14);
+        this.setZoom(18);
         google.maps.event.removeListener(boundsListener);
     });
     
