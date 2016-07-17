@@ -231,32 +231,27 @@ def heartbeat(api_endpoint, access_token, response):
     return heartbeat
 
 def main(location=None):
-    ptc_username = os.environ.get('PTC_USERNAME', False)
-    ptc_password = os.environ.get('PTC_PASSWORD', False)
     
-    pokemons = json.load(open('pokemon.json'))
-    parser = argparse.ArgumentParser()
-    if not ptc_username:
+    pokemons = json.load(open('api/pokemon.json'))
+    if location:
+        ptc_username = os.environ.get('PTC_USERNAME', "Invalid")
+        ptc_password = os.environ.get('PTC_PASSWORD', "Invalid")
+    else:
+        parser = argparse.ArgumentParser()
         parser.add_argument("-u", "--username", help="PTC Username", required=True)
-    if not ptc_password:
         parser.add_argument("-p", "--password", help="PTC Password", required=True)
-    if not location:
         parser.add_argument("-l", "--location", help="Location", required=True)
-    parser.add_argument("-d", "--debug", help="Debug Mode", action='store_true')
-    parser.set_defaults(DEBUG=False)
-    args = parser.parse_args()
-    
-    if not ptc_username:
+        parser.add_argument("-d", "--debug", help="Debug Mode", action='store_true')
+        parser.set_defaults(DEBUG=False)
+        args = parser.parse_args()
         ptc_username = args.username
-    if not ptc_password:
         ptc_password = args.password
-    if not location:
         location = args.location
     
-    if args.debug:
-        global DEBUG
-        DEBUG = True
-        print('[!] DEBUG mode on')
+        if args.debug:
+            global DEBUG
+            DEBUG = True
+            print('[!] DEBUG mode on')
 
     set_location(location)
 
