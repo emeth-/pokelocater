@@ -47,6 +47,15 @@ function handler(location) {
 			markers = [];
 			infoWindowContent = [];
 			marker_images = [];
+			
+			//Your position
+			marker_obj = ["Ashe", location.coords.latitude,location.coords.longitude];
+			markers.push(marker_obj);
+			infoWindowContent_obj = ['<div class="info_content"><h3>You</h3></div>'];
+			infoWindowContent.push(infoWindowContent_obj);
+			marker_images.push("/static/poke/trainer.gif");
+			
+			
 			$.each(data.data, function(k, v) {
 				marker_obj = [v.name, v.latitude,v.longitude];
 				markers.push(marker_obj);
@@ -54,7 +63,7 @@ function handler(location) {
         '<h3>'+v.name+'</h3>' +
         '<p>will be there for another '+v.time_left+' seconds.</p>' +        '</div>'];
 				infoWindowContent.push(infoWindowContent_obj);
-				marker_images.push("/static/poke/"+v.id+".ico")
+				marker_images.push("/static/poke/"+v.id+".ico");
 			});
 			$('#map_canvas').html('');
 			create_map();
