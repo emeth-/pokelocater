@@ -252,6 +252,8 @@ def main(location=None):
             global DEBUG
             DEBUG = True
             print('[!] DEBUG mode on')
+            
+    print ptc_username, ptc_password, location
 
     set_location(location)
 
