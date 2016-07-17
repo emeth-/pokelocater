@@ -22,6 +22,7 @@
 
 var markers = [];
 var infoWindowContent = [];
+var marker_images = [];
 
 jQuery(function($) {
     // Asynchronously Load the map API 
@@ -35,7 +36,7 @@ function map_api_loaded() {
 }
 
 function handler(location) {
-	$('#map_canvas').html('');
+	$('#map_canvas').html('Scanning for pokemon...');
 	$.ajax({ 
 		type: 'POST', 
 		url: '/get_poke', 
@@ -45,6 +46,7 @@ function handler(location) {
 			console.log("pokemon_data", data.data);
 			markers = [];
 			infoWindowContent = [];
+			marker_images = [];
 			$.each(data.data, function(k, v) {
 				marker_obj = [v.name, v.latitude,v.longitude];
 				markers.push(marker_obj);
@@ -52,7 +54,9 @@ function handler(location) {
         '<h3>'+v.name+'</h3>' +
         '<p>will be there for another '+v.time_left+' seconds.</p>' +        '</div>'];
 				infoWindowContent.push(infoWindowContent_obj);
+				marker_images.push("/static/poke/"+v.id+".ico")
 			});
+			$('#map_canvas').html('');
 			create_map();
 		},
 		fail: function() {
@@ -82,9 +86,10 @@ function create_map() {
         marker = new google.maps.Marker({
             position: position,
             map: map,
-            title: markers[i][0]
+            title: markers[i][0],
+			icon: marker_images[i]
         });
-        
+		
         // Allow each marker to have an info window    
         google.maps.event.addListener(marker, 'click', (function(marker, i) {
             return function() {

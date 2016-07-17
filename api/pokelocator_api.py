@@ -429,6 +429,7 @@ def main(location=None):
             direction = (('N' if difflat >= 0 else 'S') if abs(difflat) > 1e-4 else '')  + (('E' if difflng >= 0 else 'W') if abs(difflng) > 1e-4 else '')
 
             nearby_pokes.append({
+                "id": poke.pokemon.PokemonId,
                 "name": pokemons[poke.pokemon.PokemonId - 1]['Name'],
                 "latitude": poke.Latitude,
                 "longitude": poke.Longitude,
