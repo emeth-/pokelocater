@@ -5,13 +5,15 @@ PokeLocator
 
 - [Optional] Sign up for a google account as well to use as a fallback for when poke club authentication is down (frequently happens). Input this username/password into the environment variables GOOG_USERNAME and GOOG_PASSWORD.
 
-##### Setup on Heroku with button deploy
+- Note that you will need to view the "https" and not "http" version of your herokuapp for most browsers to allow the code to request your location.
+
+### Setup on Heroku with button deploy
 
 - Click the DEPLOY Heroku button below to build the app in the cloud for free (requires Heroku account).
 
 [![Deploy](https://www.herokucdn.com/deploy/button.png)](https://heroku.com/deploy)
 
-##### Setup on Heroku manually
+### Setup on Heroku manually
 ```
 - Install heroku toolbelt (https://toolbelt.heroku.com/)
 - Install git
@@ -31,7 +33,7 @@ $ heroku config:set GOOG_PASSWORD=my_google_password
 $ git push heroku master
 ```
 
-##### Setup locally
+### Setup locally
 ```
 $ python manage.py runserver
 Visit http://127.0.0.1:8000/static/map.html
