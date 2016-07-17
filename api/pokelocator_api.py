@@ -94,7 +94,7 @@ def api_req(api_endpoint, access_token, *mehs, **kw):
 
         p_req.auth.token.contents = access_token
         p_req.auth.token.unknown13 = 14
-        if 'useauth' not in kw or not kw['useauth']:
+        if kw['useauth'] == "ptc":
             print "...ptc"
             p_req.auth.provider = 'ptc'
         else:
@@ -293,7 +293,7 @@ def login_ptc(username, password):
     access_token = re.sub('.*access_token=', '', access_token)
     return access_token
 
-def heartbeat(api_endpoint, access_token, response):
+def heartbeat(api_endpoint, access_token, response, login_type):
     m4 = pokemon_pb2.RequestEnvelop.Requests()
     m = pokemon_pb2.RequestEnvelop.MessageSingleInt()
     m.f1 = int(time.time() * 1000)
@@ -316,6 +316,7 @@ def heartbeat(api_endpoint, access_token, response):
     response = get_profile(
         access_token,
         api_endpoint,
+        login_type,
         response.unknown7,
         m1,
         pokemon_pb2.RequestEnvelop.Requests(),
@@ -336,7 +337,7 @@ def main(location=None):
             
     set_location(location)
 
-    login_type = None
+    login_type = "ptc"
 
     try:
         access_token = login_ptc(ptc_username, ptc_password)
@@ -387,13 +388,13 @@ def main(location=None):
         original_long = FLOAT_LONG
         parent = CellId.from_lat_lng(LatLng.from_degrees(FLOAT_LAT, FLOAT_LONG)).parent(15)
 
-        h = heartbeat(api_endpoint, access_token, response)
+        h = heartbeat(api_endpoint, access_token, response, login_type)
         hs = [h]
         seen = set([])
         for child in parent.children():
             latlng = LatLng.from_point(Cell(child).get_center())
             set_location_coords(latlng.lat().degrees, latlng.lng().degrees, 0)
-            hs.append(heartbeat(api_endpoint, access_token, response))
+            hs.append(heartbeat(api_endpoint, access_token, response, login_type))
         set_location_coords(original_lat, original_long, 0)
 
         visible = []
