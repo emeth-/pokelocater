@@ -1,0 +1,60 @@
+<html>
+<head>
+	<script src="https://code.jquery.com/jquery-1.6.4.min.js"></script>
+        <title>Poke-locator</title>
+        <script type="text/javascript">
+        function handler(location)
+        {
+            $('#lat').html(location.coords.latitude);
+            $('#long').html(location.coords.longitude);
+            
+            
+            
+            $.ajax({ 
+                type: 'POST', 
+                url: '/get_poke', 
+                data: { location: location.coords.latitude.toString()+', '+location.coords.longitude.toString() }, 
+                dataType: 'json',
+                success: function (data) {
+                    //$('#results').html(JSON.stringify(data.data, null, 2));
+                        var htmlz = "";
+                    $.each(data.data, function(k, v) {
+                        htmlz += "<tr>";
+                        htmlz += "<td>"+v.name+"</td>";
+                        htmlz += "<td>"+v.distance+"</td>";
+                        htmlz += "<td>"+v.direction+"</td>";
+                        htmlz += "<td>"+v.time_left+"</td>";
+                        htmlz += "<td><a target='_blank' href='https://www.google.com/maps/place/"+v.latitude+","+v.longitude+"'>Link</a></td>";
+                        htmlz += "</tr>";
+                    });
+                    $('#results').html(htmlz);
+                },
+                fail: function() {
+                    $('#results').html('Error while attempting to retrieve poke locations');
+                }
+            });
+            
+            
+            
+            
+        }
+        navigator.geolocation.getCurrentPosition(handler);
+        </script>
+</head>
+<body>
+Your Latitude: <span id='lat'></span><br />
+Your Longitude: <span id='long'></span><br />
+<a href="map.html">Map View</a>
+<br /><br />
+<table border=1 width=100%>
+    <tr>
+        <th>Name</th>
+        <th>Distance (m)</th>
+        <th>Direction</th>
+        <th>Time Left (seconds)</th>
+        <th>Map</th>
+    </tr>
+    <tbody id='results'></tbody>
+</table><br /><br />
+</body>
+</html>

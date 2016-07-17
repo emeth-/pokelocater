@@ -1,60 +1,123 @@
-<html>
+
 <head>
-	<script src="https://code.jquery.com/jquery-1.6.4.min.js"></script>
-        <title>Poke-locator</title>
-        <script type="text/javascript">
-        function handler(location)
-        {
-            $('#lat').html(location.coords.latitude);
-            $('#long').html(location.coords.longitude);
-            
-            
-            
-            $.ajax({ 
-                type: 'POST', 
-                url: '/get_poke', 
-                data: { location: location.coords.latitude.toString()+', '+location.coords.longitude.toString() }, 
-                dataType: 'json',
-                success: function (data) {
-                    //$('#results').html(JSON.stringify(data.data, null, 2));
-                        var htmlz = "";
-                    $.each(data.data, function(k, v) {
-                        htmlz += "<tr>";
-                        htmlz += "<td>"+v.name+"</td>";
-                        htmlz += "<td>"+v.distance+"</td>";
-                        htmlz += "<td>"+v.direction+"</td>";
-                        htmlz += "<td>"+v.time_left+"</td>";
-                        htmlz += "<td><a target='_blank' href='https://www.google.com/maps/place/"+v.latitude+","+v.longitude+"'>Link</a></td>";
-                        htmlz += "</tr>";
-                    });
-                    $('#results').html(htmlz);
-                },
-                fail: function() {
-                    $('#results').html('Error while attempting to retrieve poke locations');
-                }
-            });
-            
-            
-            
-            
-        }
-        navigator.geolocation.getCurrentPosition(handler);
-        </script>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
 </head>
-<body>
-Your Latitude: <span id='lat'></span><br />
-Your Longitude: <span id='long'></span><br />
-<a href="map.html">Map View</a>
-<br /><br />
-<table border=1 width=100%>
-    <tr>
-        <th>Name</th>
-        <th>Distance (m)</th>
-        <th>Direction</th>
-        <th>Time Left (seconds)</th>
-        <th>Map</th>
-    </tr>
-    <tbody id='results'></tbody>
-</table><br /><br />
-</body>
-</html>
+
+<style>
+html { height: 100% }
+body { height: 100%; margin: 0px; padding: 0px }
+#map_wrapper {
+    height: 100%;
+}
+
+#map_canvas {
+    width: 100%;
+    height: 100%;
+}
+</style>
+
+<div id="map_wrapper">
+    <div id="map_canvas" class="mapping">Detecting location...</div>
+</div>
+
+<script>
+
+var markers = [];
+var infoWindowContent = [];
+var marker_images = [];
+
+jQuery(function($) {
+    // Asynchronously Load the map API 
+    var script = document.createElement('script');
+    script.src = "//maps.googleapis.com/maps/api/js?key=AIzaSyA18RVaHFv4YmvoQHpeb-_WzDTkYRAP_IM&sensor=false&callback=map_api_loaded";
+    document.body.appendChild(script);
+});
+
+function map_api_loaded() {
+    navigator.geolocation.getCurrentPosition(handler);
+}
+
+function handler(location) {
+	$('#map_canvas').html('Scanning for pokemon...');
+	$.ajax({ 
+		type: 'POST', 
+		url: '/get_poke', 
+		data: { location: location.coords.latitude.toString()+', '+location.coords.longitude.toString() }, 
+		dataType: 'json',
+		success: function (data) {
+			console.log("pokemon_data", data.data);
+			markers = [];
+			infoWindowContent = [];
+			marker_images = [];
+			
+			//Your position
+			marker_obj = ["Ashe", location.coords.latitude,location.coords.longitude];
+			markers.push(marker_obj);
+			infoWindowContent_obj = ['<div class="info_content"><h3>You</h3></div>'];
+			infoWindowContent.push(infoWindowContent_obj);
+			marker_images.push("/static/poke/trainer.gif");
+			
+			
+			$.each(data.data, function(k, v) {
+				marker_obj = [v.name, v.latitude,v.longitude];
+				markers.push(marker_obj);
+				infoWindowContent_obj = ['<div class="info_content">' +
+        '<h3>'+v.name+'</h3>' +
+        '<p>will be there for another '+v.time_left+' seconds.</p>' +        '</div>'];
+				infoWindowContent.push(infoWindowContent_obj);
+				marker_images.push("/static/poke/"+v.id+".ico");
+			});
+			$('#map_canvas').html('');
+			create_map();
+		},
+		fail: function() {
+			alert('Error while attempting to retrieve poke locations');
+		}
+	});
+}
+
+function create_map() {
+    var map;
+    var bounds = new google.maps.LatLngBounds();
+    var mapOptions = {
+        mapTypeId: 'roadmap'
+    };
+                    
+    // Display a map on the page
+    map = new google.maps.Map(document.getElementById("map_canvas"), mapOptions);
+    map.setTilt(45);
+        
+    // Display multiple markers on a map
+    var infoWindow = new google.maps.InfoWindow(), marker, i;
+    
+    // Loop through our array of markers & place each one on the map  
+    for( i = 0; i < markers.length; i++ ) {
+        var position = new google.maps.LatLng(markers[i][1], markers[i][2]);
+        bounds.extend(position);
+        marker = new google.maps.Marker({
+            position: position,
+            map: map,
+            title: markers[i][0],
+			icon: marker_images[i]
+        });
+		
+        // Allow each marker to have an info window    
+        google.maps.event.addListener(marker, 'click', (function(marker, i) {
+            return function() {
+                infoWindow.setContent(infoWindowContent[i][0]);
+                infoWindow.open(map, marker);
+            }
+        })(marker, i));
+
+        // Automatically center the map fitting all markers on the screen
+        map.fitBounds(bounds);
+    }
+
+    // Override our map zoom level once our fitBounds function runs (Make sure it only runs once)
+    var boundsListener = google.maps.event.addListener((map), 'bounds_changed', function(event) {
+        this.setZoom(18);
+        google.maps.event.removeListener(boundsListener);
+    });
+    
+}
+</script>
