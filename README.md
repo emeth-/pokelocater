@@ -38,5 +38,4 @@ Pokelocator api from:
 https://github.com/leegao/pokemongo-api-demo/tree/simulation
 
 TODO
-- Add google auth (automatically fail over to it if poke club auth failed)
-- cache auth token somewhere
+- cache auth token somewhere until it expires
