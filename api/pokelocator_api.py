@@ -331,24 +331,51 @@ def main(location=None):
     set_location(location)
     
     login_type = "ptc"
-
+    access_token = "fake"
+    
     try:
-        access_token = login_ptc(ptc_username, ptc_password)
+        f = open('access_token.json','r')
+        cached_token_info = json.loads(f.read())
+        f.close()
+        login_type = cached_token_info['login_type']
+        access_token = cached_token_info['access_token']
     except:
-        access_token = None
-    print "access_token", access_token
-    if access_token is None:
-        print('[-] Trouble logging in via PTC')
-        
-        print('[+] Authentication with google...')
-        goog_username = os.environ.get('GOOG_USERNAME', "Invalid")
-        goog_password = os.environ.get('GOOG_PASSWORD', "Invalid")
-        access_token = login_google(goog_username, goog_password)
-        login_type = "google"
-        
-    print('[+] RPC Session Token: {} ...'.format(access_token[:25]))
-
+        pass
+    
     api_endpoint = get_api_endpoint(login_type, access_token)
+    if api_endpoint == "https:///rpc":
+        print "BAD CACHE"
+    
+        login_type = "ptc"
+        try:
+            access_token = login_ptc(ptc_username, ptc_password)
+        except:
+            access_token = None
+        print "access_token", access_token
+        if access_token is None:
+            print('[-] Trouble logging in via PTC')
+            
+            print('[+] Authentication with google...')
+            goog_username = os.environ.get('GOOG_USERNAME', "Invalid")
+            goog_password = os.environ.get('GOOG_PASSWORD', "Invalid")
+            access_token = login_google(goog_username, goog_password)
+            login_type = "google"
+            
+        f = open('access_token.json','w')
+        f.write(json.dumps({
+            "access_token": access_token,
+            "login_type": login_type
+        })) 
+        f.close()
+        
+        print('[+] RPC Session Token: {} ...'.format(access_token[:25]))
+
+        api_endpoint = get_api_endpoint(login_type, access_token)
+    else:
+        print "Login cache is good!"
+        
+    print "api_endpoint", api_endpoint
+        
     if api_endpoint is None:
         print('[-] RPC server offline')
         return
