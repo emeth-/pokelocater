@@ -31,7 +31,7 @@ $ heroku config:set GOOG_PASSWORD=my_google_password
 $ git push heroku master
 ```
 
-Now visit your heroku app url in the browser.
+Now visit your heroku app url in the browser. You must use `https://` instead of `http://` to allow location tracking (modern browsers block it if not https).
 
 ### Setup locally
 ```
