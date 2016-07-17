@@ -180,8 +180,7 @@ def login_ptc(username, password):
     try:
         ticket = re.sub('.*ticket=', '', r1.history[0].headers['Location'])
     except e:
-        if DEBUG:
-            print(r1.json()['errors'][0])
+        print(r1.json()['errors'][0])
         return None
 
     data1 = {
@@ -192,6 +191,7 @@ def login_ptc(username, password):
         'code': ticket,
     }
     r2 = SESSION.post(LOGIN_OAUTH, data=data1)
+    print r2.content
     access_token = re.sub('&expires.*', '', r2.content)
     access_token = re.sub('.*access_token=', '', access_token)
     return access_token
