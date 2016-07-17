@@ -40,6 +40,14 @@ Now visit your heroku app url in the browser.
 - Install pip (e.g. sudo easy_install pip)
 ```
 
+Setup environmental variables (google how to do it for your system):
+```
+PTC_USERNAME=my_pokeclub_username
+PTC_PASSWORD=my_pokeclub_password
+GOOG_USERNAME=my_google_username
+GOOG_PASSWORD=my_google_password
+```
+
 ```
 $ sudo pip install -r requirements.txt
 $ python manage.py runserver
