@@ -258,6 +258,7 @@ def main(location=None):
     set_location(location)
 
     access_token = login_ptc(ptc_username, ptc_password)
+    print "access_token", access_token
     if access_token is None:
         print('[-] Wrong username/password')
         return
