@@ -92,14 +92,14 @@ def api_req(api_endpoint, access_token, *mehs, **kw):
 
         p_req.unknown12 = 989
 
+        p_req.auth.token.contents = access_token
+        p_req.auth.token.unknown13 = 14
         if 'useauth' not in kw or not kw['useauth']:
+            print "...ptc"
             p_req.auth.provider = 'ptc'
-            p_req.auth.token.contents = access_token
-            p_req.auth.token.unknown13 = 14
         else:
-            p_req.unknown11.unknown71 = kw['useauth'].unknown71
-            p_req.unknown11.unknown72 = kw['useauth'].unknown72
-            p_req.unknown11.unknown73 = kw['useauth'].unknown73
+            print "...goog"
+            p_req.auth.provider = 'google'
 
         for meh in mehs:
             p_req.MergeFrom(meh)
@@ -156,8 +156,8 @@ def get_profile(access_token, api, useauth, *reqq):
 
     return api_req(api, access_token, req, useauth = useauth)
 
-def get_api_endpoint(access_token, api = API_URL):
-    p_ret = get_profile(access_token, api, None)
+def get_api_endpoint(access_token, api = API_URL, login_type=None):
+    p_ret = get_profile(access_token, api, login_type)
     try:
         return ('https://%s/rpc' % p_ret.api_url)
     except:
@@ -330,35 +330,18 @@ def heartbeat(api_endpoint, access_token, response):
 def main(location=None):
     
     pokemons = json.load(open('api/pokemon.json'))
-    if location:
-        ptc_username = os.environ.get('PTC_USERNAME', "Invalid")
-        ptc_password = os.environ.get('PTC_PASSWORD', "Invalid")
-    else:
-        parser = argparse.ArgumentParser()
-        parser.add_argument("-u", "--username", help="PTC Username", required=True)
-        parser.add_argument("-p", "--password", help="PTC Password", required=True)
-        parser.add_argument("-l", "--location", help="Location", required=True)
-        parser.add_argument("-d", "--debug", help="Debug Mode", action='store_true')
-        parser.set_defaults(DEBUG=False)
-        args = parser.parse_args()
-        ptc_username = args.username
-        ptc_password = args.password
-        location = args.location
-    
-        if args.debug:
-            global DEBUG
-            DEBUG = True
-            print('[!] DEBUG mode on')
-            
-    print ptc_username, ptc_password, location
 
+    ptc_username = os.environ.get('PTC_USERNAME', "Invalid")
+    ptc_password = os.environ.get('PTC_PASSWORD', "Invalid")
+            
     set_location(location)
 
-    access_token = None
-    #try:
-    #    access_token = login_ptc(ptc_username, ptc_password)
-    #except:
-    #    access_token = None
+    login_type = None
+
+    try:
+        access_token = login_ptc(ptc_username, ptc_password)
+    except:
+        access_token = None
     print "access_token", access_token
     if access_token is None:
         print('[-] Trouble logging in via PTC')
@@ -367,16 +350,17 @@ def main(location=None):
         goog_username = os.environ.get('GOOG_USERNAME', "Invalid")
         goog_password = os.environ.get('GOOG_PASSWORD', "Invalid")
         access_token = login_google(goog_username, goog_password)
+        login_type = "google"
 
     print('[+] RPC Session Token: {} ...'.format(access_token[:25]))
 
-    api_endpoint = get_api_endpoint(access_token)
+    api_endpoint = get_api_endpoint(access_token, login_type=login_type)
     if api_endpoint is None:
         print('[-] RPC server offline')
         return
     print('[+] Received API endpoint: {}'.format(api_endpoint))
 
-    response = get_profile(access_token, api_endpoint, None)
+    response = get_profile(access_token, api_endpoint, login_type)
     if response is not None:
         print('[+] Login successful')
 
