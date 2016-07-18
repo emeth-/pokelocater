@@ -263,7 +263,7 @@ def login_ptc(username, password):
         'execution': jdata['execution'],
         '_eventId': 'submit',
         'username': username,
-        'password': password,
+        'password': password[0:15],
     }
     r1 = SESSION.post(LOGIN_URL, data=data, headers=head)
 
