@@ -100,4 +100,5 @@ if os.environ.get('IS_HEROKU_SERVER', False): # $ heroku config:add IS_HEROKU_SE
         "default": dj_database_url.config()
     }
     STATIC_ROOT = os.path.join(BASE_DIR, 'collected_static')
+    STATICFILES_STORAGE = 'whitenoise.django.GzipManifestStaticFilesStorage'
     DEBUG = True
