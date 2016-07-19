@@ -121,13 +121,16 @@ function create_map() {
         var position = new google.maps.LatLng(markers[i][1], markers[i][2]);
         bounds.extend(position);
         marker = new google.maps.Marker({
-            position: position,
-            map: map,
-            title: markers[i][0],
-			icon: marker_images[i]
-        });
-		
-        // Allow each marker to have an info window    
+        position: position,
+        map: map,
+        title: markers[i][0],
+        icon: {
+            url: marker_images[i], // url
+            scaledSize: new google.maps.Size(60, 60)  // scaled size
+        }
+    });
+
+        // Allow each marker to have an info window
         google.maps.event.addListener(marker, 'click', (function(marker, i) {
             return function() {
                 infoWindow.setContent(infoWindowContent[i][0]);
