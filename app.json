@@ -1,14 +1,14 @@
 {
   "env": {
     "IS_HEROKU_SERVER": "1",
+    "GMAPS_API_KEY": "my_google_maps_api_key",
     "PTC_USERNAME": "my_pokeclub_username",
     "PTC_PASSWORD": "my_pokeclub_password",
     "GOOG_USERNAME": "my_google_username",
     "GOOG_PASSWORD": "my_google_password"
   },
   "addons": [
-    "papertrail",
-    "heroku-postgresql:hobby-dev"
+    "papertrail"
   ],
   "success_url": "/",
   "scripts": {
