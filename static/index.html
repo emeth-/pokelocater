@@ -26,6 +26,7 @@ var markers = [];
 var infoWindowContent = [];
 var marker_images = [];
 var first_load = true;
+var scans_left = 0;
 
 jQuery(function($) {
     // Asynchronously Load the map API 
@@ -36,12 +37,21 @@ jQuery(function($) {
 
 function map_api_loaded() {
     navigator.geolocation.getCurrentPosition(handler);
+	
+	//var fake_location_coords = {
+	//	latitude: "35.6894",
+	//	longitude: "139.692"
+	//};
+	//var fake_location = {
+	//	"coords": fake_location_coords
+	//}
+	//handler(fake_location);
 }
 
 function build_initial_map(location) {
 	//Your position
 	$('#map_canvas').html('');
-	marker_obj = ["Ashe", location.coords.latitude,location.coords.longitude];
+	var marker_obj = ["Ashe", location.coords.latitude,location.coords.longitude];
 	markers.push(marker_obj);
 	infoWindowContent_obj = ['<div class="info_content"><h3>You</h3></div>'];
 	infoWindowContent.push(infoWindowContent_obj);
@@ -52,23 +62,29 @@ function build_initial_map(location) {
 }
 
 function build_map_update(location) {
+	markers = [];
+	infoWindowContent = [];
+	marker_images = [];
+	
+	var marker_obj = ["Ashe", location.coords.latitude,location.coords.longitude];
+	markers.push(marker_obj);
+	infoWindowContent_obj = ['<div class="info_content"><h3>You</h3></div>'];
+	infoWindowContent.push(infoWindowContent_obj);
+	marker_images.push("/static/poke/trainer.gif");
+	
+	scans_left = 5;
+	
 	$.ajax({ 
 		type: 'POST', 
 		url: '/get_poke', 
-		data: { location: location.coords.latitude.toString()+', '+location.coords.longitude.toString() }, 
+		data: {
+			location: location.coords.latitude.toString()+', '+location.coords.longitude.toString(),
+			direction: ""
+		}, 
 		dataType: 'json',
 		success: function (data) {
 			console.log("pokemon_data", data.data);
-			markers = [];
-			infoWindowContent = [];
-			marker_images = [];
-			
-			marker_obj = ["Ashe", location.coords.latitude,location.coords.longitude];
-			markers.push(marker_obj);
-			infoWindowContent_obj = ['<div class="info_content"><h3>You</h3></div>'];
-			infoWindowContent.push(infoWindowContent_obj);
-			marker_images.push("/static/poke/trainer.gif");
-			
+
 			$.each(data.data, function(k, v) {
 				marker_obj = [v.name, v.latitude,v.longitude];
 				markers.push(marker_obj);
@@ -78,19 +94,185 @@ function build_map_update(location) {
 				infoWindowContent.push(infoWindowContent_obj);
 				marker_images.push("/static/poke/"+v.id+".ico");
 			});
-			$('#map_canvas').html('');
-			create_map();
-			setTimeout(function(){
-				navigator.geolocation.getCurrentPosition(handler);
-			}, 60000);
+            refresh_map_with_new_data();
+			scans_left = scans_left - 1;
+			if (!scans_left) {
+				setTimeout(function(){
+					navigator.geolocation.getCurrentPosition(handler);
+				}, 60000);
+            }
 		},
 		error: function() {
 			console.log('Error while attempting to retrieve poke locations');
-			setTimeout(function(){
-				navigator.geolocation.getCurrentPosition(handler);
-			}, 5000);
+			scans_left = scans_left - 1;
+			if (!scans_left) {
+				setTimeout(function(){
+					navigator.geolocation.getCurrentPosition(handler);
+				}, 15000);
+            }
 		}
 	});
+	
+	$.ajax({ 
+		type: 'POST', 
+		url: '/get_poke', 
+		data: {
+			location: location.coords.latitude.toString()+', '+location.coords.longitude.toString(),
+			direction: "west"
+		}, 
+		dataType: 'json',
+		success: function (data) {
+			console.log("pokemon_data", data.data);
+
+			$.each(data.data, function(k, v) {
+				marker_obj = [v.name, v.latitude,v.longitude];
+				markers.push(marker_obj);
+				infoWindowContent_obj = ['<div class="info_content">' +
+		'<h3>'+v.name+'</h3>' +
+		'<p>will be there for another '+v.time_left+' seconds.</p>' +        '</div>'];
+				infoWindowContent.push(infoWindowContent_obj);
+				marker_images.push("/static/poke/"+v.id+".ico");
+			});
+            refresh_map_with_new_data();
+			scans_left = scans_left - 1;
+			if (!scans_left) {
+				setTimeout(function(){
+					navigator.geolocation.getCurrentPosition(handler);
+				}, 60000);
+            }
+		},
+		error: function() {
+			console.log('Error while attempting to retrieve poke locations');
+			scans_left = scans_left - 1;
+			if (!scans_left) {
+				setTimeout(function(){
+					navigator.geolocation.getCurrentPosition(handler);
+				}, 15000);
+            }
+		}
+	});
+	
+	$.ajax({ 
+		type: 'POST', 
+		url: '/get_poke', 
+		data: {
+			location: location.coords.latitude.toString()+', '+location.coords.longitude.toString(),
+			direction: "north"
+		}, 
+		dataType: 'json',
+		success: function (data) {
+			console.log("pokemon_data", data.data);
+
+			$.each(data.data, function(k, v) {
+				marker_obj = [v.name, v.latitude,v.longitude];
+				markers.push(marker_obj);
+				infoWindowContent_obj = ['<div class="info_content">' +
+		'<h3>'+v.name+'</h3>' +
+		'<p>will be there for another '+v.time_left+' seconds.</p>' +        '</div>'];
+				infoWindowContent.push(infoWindowContent_obj);
+				marker_images.push("/static/poke/"+v.id+".ico");
+			});
+            refresh_map_with_new_data();
+			scans_left = scans_left - 1;
+			if (!scans_left) {
+				setTimeout(function(){
+					navigator.geolocation.getCurrentPosition(handler);
+				}, 60000);
+            }
+		},
+		error: function() {
+			console.log('Error while attempting to retrieve poke locations');
+			scans_left = scans_left - 1;
+			if (!scans_left) {
+				setTimeout(function(){
+					navigator.geolocation.getCurrentPosition(handler);
+				}, 15000);
+            }
+		}
+	});
+	
+	$.ajax({ 
+		type: 'POST', 
+		url: '/get_poke', 
+		data: {
+			location: location.coords.latitude.toString()+', '+location.coords.longitude.toString(),
+			direction: "south"
+		}, 
+		dataType: 'json',
+		success: function (data) {
+			console.log("pokemon_data", data.data);
+
+			$.each(data.data, function(k, v) {
+				marker_obj = [v.name, v.latitude,v.longitude];
+				markers.push(marker_obj);
+				infoWindowContent_obj = ['<div class="info_content">' +
+		'<h3>'+v.name+'</h3>' +
+		'<p>will be there for another '+v.time_left+' seconds.</p>' +        '</div>'];
+				infoWindowContent.push(infoWindowContent_obj);
+				marker_images.push("/static/poke/"+v.id+".ico");
+			});
+            refresh_map_with_new_data();
+			scans_left = scans_left - 1;
+			if (!scans_left) {
+				setTimeout(function(){
+					navigator.geolocation.getCurrentPosition(handler);
+				}, 60000);
+            }
+		},
+		error: function() {
+			console.log('Error while attempting to retrieve poke locations');
+			scans_left = scans_left - 1;
+			if (!scans_left) {
+				setTimeout(function(){
+					navigator.geolocation.getCurrentPosition(handler);
+				}, 15000);
+            }
+		}
+	});
+	
+	$.ajax({ 
+		type: 'POST', 
+		url: '/get_poke', 
+		data: {
+			location: location.coords.latitude.toString()+', '+location.coords.longitude.toString(),
+			direction: "east"
+		}, 
+		dataType: 'json',
+		success: function (data) {
+			console.log("pokemon_data", data.data);
+
+			$.each(data.data, function(k, v) {
+				marker_obj = [v.name, v.latitude,v.longitude];
+				markers.push(marker_obj);
+				infoWindowContent_obj = ['<div class="info_content">' +
+		'<h3>'+v.name+'</h3>' +
+		'<p>will be there for another '+v.time_left+' seconds.</p>' +        '</div>'];
+				infoWindowContent.push(infoWindowContent_obj);
+				marker_images.push("/static/poke/"+v.id+".ico");
+			});
+            refresh_map_with_new_data();
+			scans_left = scans_left - 1;
+			if (!scans_left) {
+				setTimeout(function(){
+					navigator.geolocation.getCurrentPosition(handler);
+				}, 60000);
+            }
+		},
+		error: function() {
+			console.log('Error while attempting to retrieve poke locations');
+			scans_left = scans_left - 1;
+			if (!scans_left) {
+				setTimeout(function(){
+					navigator.geolocation.getCurrentPosition(handler);
+				}, 15000);
+            }
+		}
+	});
+}
+
+function refresh_map_with_new_data() {
+	$('#map_canvas').html('');
+	create_map();
 }
 
 function handler(location) {
@@ -102,8 +284,8 @@ function handler(location) {
 	}
 }
 
+var map;
 function create_map() {
-    var map;
     var bounds = new google.maps.LatLngBounds();
     var mapOptions = {
         mapTypeId: 'roadmap'
@@ -121,13 +303,16 @@ function create_map() {
         var position = new google.maps.LatLng(markers[i][1], markers[i][2]);
         bounds.extend(position);
         marker = new google.maps.Marker({
-            position: position,
-            map: map,
-            title: markers[i][0],
-			icon: marker_images[i]
-        });
-		
-        // Allow each marker to have an info window    
+        position: position,
+        map: map,
+        title: markers[i][0],
+        icon: {
+            url: marker_images[i], // url
+            scaledSize: new google.maps.Size(120, 120)  // scaled size
+        }
+    });
+
+        // Allow each marker to have an info window
         google.maps.event.addListener(marker, 'click', (function(marker, i) {
             return function() {
                 infoWindow.setContent(infoWindowContent[i][0]);
@@ -136,12 +321,13 @@ function create_map() {
         })(marker, i));
 
         // Automatically center the map fitting all markers on the screen
-        map.fitBounds(bounds);
+		map.fitBounds(bounds);
+		map.setCenter(new google.maps.LatLng(markers[0][1], markers[0][2]));
     }
 
     // Override our map zoom level once our fitBounds function runs (Make sure it only runs once)
     var boundsListener = google.maps.event.addListener((map), 'bounds_changed', function(event) {
-        this.setZoom(18);
+        map.setZoom(17);
         google.maps.event.removeListener(boundsListener);
     });
     
