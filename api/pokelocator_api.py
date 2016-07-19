@@ -53,7 +53,7 @@ def getNeighbors():
       
         lat2 = math.degrees(lat2)
         lng2 = math.degrees(lng2)
-   
+
         new_cell = CellId.from_lat_lng(LatLng.from_degrees(lat2, lng2)).parent(15)
         walk.append(new_cell.id())
 
@@ -347,6 +347,7 @@ def heartbeat(api_endpoint, access_token, response, login_type):
     payload = response.payload[0]
     heartbeat = pokemon_pb2.ResponseEnvelop.HeartbeatPayload()
     heartbeat.ParseFromString(payload)
+
     return heartbeat
 
 def main(location=None, direction=None):
@@ -449,14 +450,16 @@ def main(location=None, direction=None):
     h = heartbeat(api_endpoint, access_token, response, login_type)
     hs = [h]
     seen = set([])
-    for child in parent.children():
-        latlng = LatLng.from_point(Cell(child).get_center())
-        set_location_coords(latlng.lat().degrees, latlng.lng().degrees, 0)
+
+    for c in getNeighbors():
+        cell = CellId(c)
+        cell_ll = cell.to_lat_lng()
+        set_location_coords(cell_ll.lat().degrees, cell_ll.lng().degrees, 0)
         hs.append(heartbeat(api_endpoint, access_token, response, login_type))
     set_location_coords(original_lat, original_long, 0)
 
     visible = []
-
+    print 'hs is ' +str(hs)
     for hh in hs:
         for cell in hh.cells:
             for wild in cell.WildPokemon:
