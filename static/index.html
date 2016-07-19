@@ -37,12 +37,21 @@ jQuery(function($) {
 
 function map_api_loaded() {
     navigator.geolocation.getCurrentPosition(handler);
+	
+	//var fake_location_coords = {
+	//	latitude: "35.6894",
+	//	longitude: "139.692"
+	//};
+	//var fake_location = {
+	//	"coords": fake_location_coords
+	//}
+	//handler(fake_location);
 }
 
 function build_initial_map(location) {
 	//Your position
 	$('#map_canvas').html('');
-	marker_obj = ["Ashe", location.coords.latitude,location.coords.longitude];
+	var marker_obj = ["Ashe", location.coords.latitude,location.coords.longitude];
 	markers.push(marker_obj);
 	infoWindowContent_obj = ['<div class="info_content"><h3>You</h3></div>'];
 	infoWindowContent.push(infoWindowContent_obj);
@@ -57,7 +66,7 @@ function build_map_update(location) {
 	infoWindowContent = [];
 	marker_images = [];
 	
-	marker_obj = ["Ashe", location.coords.latitude,location.coords.longitude];
+	var marker_obj = ["Ashe", location.coords.latitude,location.coords.longitude];
 	markers.push(marker_obj);
 	infoWindowContent_obj = ['<div class="info_content"><h3>You</h3></div>'];
 	infoWindowContent.push(infoWindowContent_obj);
@@ -275,8 +284,8 @@ function handler(location) {
 	}
 }
 
+var map;
 function create_map() {
-    var map;
     var bounds = new google.maps.LatLngBounds();
     var mapOptions = {
         mapTypeId: 'roadmap'
@@ -312,14 +321,16 @@ function create_map() {
         })(marker, i));
 
         // Automatically center the map fitting all markers on the screen
-        map.fitBounds(bounds);
+		map.fitBounds(bounds);
+		map.setCenter(new google.maps.LatLng(markers[0][1], markers[0][2]));
     }
 
     // Override our map zoom level once our fitBounds function runs (Make sure it only runs once)
     var boundsListener = google.maps.event.addListener((map), 'bounds_changed', function(event) {
-        this.setZoom(18);
+        map.setZoom(17);
         google.maps.event.removeListener(boundsListener);
     });
     
 }
+
 </script>
