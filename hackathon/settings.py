@@ -93,7 +93,6 @@ STATICFILES_DIRS = (
     os.path.join(BASE_DIR, '../static'),
 )
 
-
 TEMPLATE_DEBUG = True
 TEMPLATE_DIRS = (os.path.join(os.path.dirname(__file__), '..', 'static').replace('\\','/'),)
 
