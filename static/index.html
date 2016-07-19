@@ -85,16 +85,21 @@ function build_map_update(location) {
 				infoWindowContent.push(infoWindowContent_obj);
 				marker_images.push("/static/poke/"+v.id+".ico");
 			});
+            refresh_map_with_new_data();
 			scans_left = scans_left - 1;
 			if (!scans_left) {
-                refresh_map_with_new_data();
+				setTimeout(function(){
+					navigator.geolocation.getCurrentPosition(handler);
+				}, 60000);
             }
 		},
 		error: function() {
 			console.log('Error while attempting to retrieve poke locations');
 			scans_left = scans_left - 1;
 			if (!scans_left) {
-                refresh_map_with_new_data();
+				setTimeout(function(){
+					navigator.geolocation.getCurrentPosition(handler);
+				}, 15000);
             }
 		}
 	});
@@ -119,16 +124,21 @@ function build_map_update(location) {
 				infoWindowContent.push(infoWindowContent_obj);
 				marker_images.push("/static/poke/"+v.id+".ico");
 			});
+            refresh_map_with_new_data();
 			scans_left = scans_left - 1;
 			if (!scans_left) {
-                refresh_map_with_new_data();
+				setTimeout(function(){
+					navigator.geolocation.getCurrentPosition(handler);
+				}, 60000);
             }
 		},
 		error: function() {
 			console.log('Error while attempting to retrieve poke locations');
 			scans_left = scans_left - 1;
 			if (!scans_left) {
-                refresh_map_with_new_data();
+				setTimeout(function(){
+					navigator.geolocation.getCurrentPosition(handler);
+				}, 15000);
             }
 		}
 	});
@@ -153,16 +163,21 @@ function build_map_update(location) {
 				infoWindowContent.push(infoWindowContent_obj);
 				marker_images.push("/static/poke/"+v.id+".ico");
 			});
+            refresh_map_with_new_data();
 			scans_left = scans_left - 1;
 			if (!scans_left) {
-                refresh_map_with_new_data();
+				setTimeout(function(){
+					navigator.geolocation.getCurrentPosition(handler);
+				}, 60000);
             }
 		},
 		error: function() {
 			console.log('Error while attempting to retrieve poke locations');
 			scans_left = scans_left - 1;
 			if (!scans_left) {
-                refresh_map_with_new_data();
+				setTimeout(function(){
+					navigator.geolocation.getCurrentPosition(handler);
+				}, 15000);
             }
 		}
 	});
@@ -187,16 +202,21 @@ function build_map_update(location) {
 				infoWindowContent.push(infoWindowContent_obj);
 				marker_images.push("/static/poke/"+v.id+".ico");
 			});
+            refresh_map_with_new_data();
 			scans_left = scans_left - 1;
 			if (!scans_left) {
-                refresh_map_with_new_data();
+				setTimeout(function(){
+					navigator.geolocation.getCurrentPosition(handler);
+				}, 60000);
             }
 		},
 		error: function() {
 			console.log('Error while attempting to retrieve poke locations');
 			scans_left = scans_left - 1;
 			if (!scans_left) {
-                refresh_map_with_new_data();
+				setTimeout(function(){
+					navigator.geolocation.getCurrentPosition(handler);
+				}, 15000);
             }
 		}
 	});
@@ -221,16 +241,21 @@ function build_map_update(location) {
 				infoWindowContent.push(infoWindowContent_obj);
 				marker_images.push("/static/poke/"+v.id+".ico");
 			});
+            refresh_map_with_new_data();
 			scans_left = scans_left - 1;
 			if (!scans_left) {
-                refresh_map_with_new_data();
+				setTimeout(function(){
+					navigator.geolocation.getCurrentPosition(handler);
+				}, 60000);
             }
 		},
 		error: function() {
 			console.log('Error while attempting to retrieve poke locations');
 			scans_left = scans_left - 1;
 			if (!scans_left) {
-                refresh_map_with_new_data();
+				setTimeout(function(){
+					navigator.geolocation.getCurrentPosition(handler);
+				}, 15000);
             }
 		}
 	});
@@ -239,9 +264,6 @@ function build_map_update(location) {
 function refresh_map_with_new_data() {
 	$('#map_canvas').html('');
 	create_map();
-	setTimeout(function(){
-		navigator.geolocation.getCurrentPosition(handler);
-	}, 60000);
 }
 
 function handler(location) {
