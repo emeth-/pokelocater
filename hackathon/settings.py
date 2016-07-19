@@ -93,9 +93,8 @@ STATICFILES_DIRS = (
     os.path.join(BASE_DIR, '../static'),
 )
 
-
 TEMPLATE_DEBUG = True
-TEMPLATE_DIRS = os.path.join(BASE_DIR, '../static'),
+TEMPLATE_DIRS = (os.path.join(os.path.dirname(__file__), '..', 'static').replace('\\','/'),)
 
 
 if os.environ.get('IS_HEROKU_SERVER', False): # $ heroku config:add IS_HEROKU_SERVER='1'
