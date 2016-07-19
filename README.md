@@ -1,6 +1,8 @@
 PokeLocator
 ===========
 
+![](http://teachthe.net/topclipbox/2016-07-19_03-12-450E0G3L.png)
+
 ### Things you will need
 
 [Google Maps API Key](https://developers.google.com/maps/documentation/javascript/get-api-key#key)
