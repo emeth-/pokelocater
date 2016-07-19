@@ -1,9 +1,11 @@
 PokeLocator
 ===========
 
-- Sign up for a poke club account [HERE](https://club.pokemon.com/us/pokemon-trainer-club/sign-up/). Input your username/password into the environment variables PTC_USERNAME and PTC_PASSWORD.
+### Things you will need
 
-- [Optional] Sign up for a google account as well to use as a fallback for when poke club authentication is down (frequently happens). Input this username/password into the environment variables GOOG_USERNAME and GOOG_PASSWORD.
+[Google Maps API Key](https://developers.google.com/maps/documentation/javascript/get-api-key#key)
+
+[Pokemon Trainer Club Account](https://club.pokemon.com/us/pokemon-trainer-club/sign-up/) OR Google Account (a throwaway)
 
 ### Setup on Heroku with button deploy
 
@@ -24,6 +26,7 @@ PokeLocator
 $ sudo pip install -r requirements.txt
 $ heroku apps:create pokelocator-demo
 $ heroku config:set IS_HEROKU_SERVER=1
+$ heroku config:set GMAPS_API_KEY=my_google_maps_api_key
 $ heroku config:set PTC_USERNAME=my_pokeclub_username
 $ heroku config:set PTC_PASSWORD=my_pokeclub_password
 $ heroku config:set GOOG_USERNAME=my_google_username
@@ -42,6 +45,7 @@ Now visit your heroku app url in the browser. You must use `https://` instead of
 
 Setup environmental variables (google how to do it for your system):
 ```
+GMAPS_API_KEY=my_google_maps_api_key
 PTC_USERNAME=my_pokeclub_username
 PTC_PASSWORD=my_pokeclub_password
 GOOG_USERNAME=my_google_username
