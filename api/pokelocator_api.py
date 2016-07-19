@@ -403,7 +403,9 @@ def main(location=None):
     nearby_pokes = []
 
     origin = LatLng.from_degrees(FLOAT_LAT, FLOAT_LONG)
-    while True:
+    print "origin", FLOAT_LAT, FLOAT_LONG
+    
+    for i in range(5):
         original_lat = FLOAT_LAT
         original_long = FLOAT_LONG
         parent = CellId.from_lat_lng(LatLng.from_degrees(FLOAT_LAT, FLOAT_LONG)).parent(15)
@@ -460,8 +462,21 @@ def main(location=None):
             })
 
             print("(%s) %s is visible at (%s, %s) for %s seconds (%sm %s from you)" % (poke.pokemon.PokemonId, pokemons[poke.pokemon.PokemonId - 1]['Name'], poke.Latitude, poke.Longitude, poke.TimeTillHiddenMs / 1000, int(origin.get_distance(other).radians * 6366468.241830914), direction))
-
-        break
+            
+        print('')
+        
+        if i == 0:
+            print "cross 1", original_lat-0.002, original_long
+            set_location_coords(original_lat-0.002, original_long, 0)
+        if i == 1:
+            print "cross 2", original_lat+0.002, original_long-0.002
+            set_location_coords(original_lat+0.002, original_long-0.002, 0)
+        if i == 2:
+            print "cross 3", original_lat+0.002, original_long+0.002
+            set_location_coords(original_lat+0.002, original_long+0.002, 0)
+        if i == 3:
+            print "cross 4", original_lat-0.002, original_long+0.002
+            set_location_coords(original_lat-0.002, original_long+0.002, 0)
 
     return nearby_pokes
 

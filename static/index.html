@@ -82,7 +82,7 @@ function build_map_update(location) {
 			create_map();
 			setTimeout(function(){
 				navigator.geolocation.getCurrentPosition(handler);
-			}, 60000);
+			}, 15000);
 		},
 		error: function() {
 			console.log('Error while attempting to retrieve poke locations');
