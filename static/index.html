@@ -302,15 +302,22 @@ function create_map() {
     for( i = 0; i < markers.length; i++ ) {
         var position = new google.maps.LatLng(markers[i][1], markers[i][2]);
         bounds.extend(position);
-        marker = new google.maps.Marker({
-        position: position,
-        map: map,
-        title: markers[i][0],
-        icon: {
-            url: marker_images[i], // url
-            scaledSize: new google.maps.Size(120, 120)  // scaled size
+		var size;
+		if (i == 0) {
+            size = new google.maps.Size(60, 60);
         }
-    });
+		else {
+			size = new google.maps.Size(120, 120);
+		}
+        marker = new google.maps.Marker({
+			position: position,
+			map: map,
+			title: markers[i][0],
+			icon: {
+				url: marker_images[i],
+				scaledSize: size  
+			}
+		});
 
         // Allow each marker to have an info window
         google.maps.event.addListener(marker, 'click', (function(marker, i) {
@@ -322,7 +329,7 @@ function create_map() {
 
         // Automatically center the map fitting all markers on the screen
 		map.fitBounds(bounds);
-		map.setCenter(new google.maps.LatLng(markers[0][1], markers[0][2]));
+		//map.setCenter(new google.maps.LatLng(markers[0][1], markers[0][2]));
     }
 
     // Override our map zoom level once our fitBounds function runs (Make sure it only runs once)
