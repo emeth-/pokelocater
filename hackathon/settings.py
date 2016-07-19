@@ -49,7 +49,7 @@ MIDDLEWARE_CLASSES = (
     'django.contrib.auth.middleware.SessionAuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    'django.middleware.security.SecurityMiddleware',
+    'django.middleware.security.SecurityMiddleware'
 )
 
 CORS_ORIGIN_ALLOW_ALL = True
@@ -94,11 +94,15 @@ STATICFILES_DIRS = (
 )
 
 
+TEMPLATE_DEBUG = True
+TEMPLATE_DIRS = os.path.join(BASE_DIR, '../static'),
+
+
 if os.environ.get('IS_HEROKU_SERVER', False): # $ heroku config:add IS_HEROKU_SERVER='1'
-    import dj_database_url
-    DATABASES = {
-        "default": dj_database_url.config()
-    }
+    MIDDLEWARE_CLASSES += ('custom_middleware.ForceSSL',)
+    os.environ['HTTPS'] = "on"
+    SESSION_COOKIE_SECURE = True #Require HTTPS/SSL Cookies
+    SESSION_COOKIE_HTTPONLY = False
     STATIC_ROOT = os.path.join(BASE_DIR, 'collected_static')
     STATICFILES_STORAGE = 'whitenoise.django.GzipManifestStaticFilesStorage'
-    DEBUG = True
+    DEBUG = True #Normally you want this as False in production, but that's causing errors for some reason

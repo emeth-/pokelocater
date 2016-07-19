@@ -7,6 +7,7 @@ import argparse
 import pokemon_pb2
 import time
 import os
+import math
 from collections import OrderedDict
 
 from google.protobuf.internal import encoder
@@ -24,17 +25,43 @@ def encode(cellid):
 
 def getNeighbors():
     origin = CellId.from_lat_lng(LatLng.from_degrees(FLOAT_LAT, FLOAT_LONG)).parent(15)
+ 
     walk = [origin.id()]
-    # 10 before and 10 after
-    next = origin.next()
-    prev = origin.prev()
-    for i in range(10):
-        walk.append(prev.id())
-        walk.append(next.id())
-        next = next.next()
-        prev = prev.prev()
-    return walk
+  
+    #get the 8 neighboring cells
+    path = [90,180,270,270,0,0,90,90]
 
+    origin_lat = FLOAT_LAT
+    origin_lng = FLOAT_LONG
+  
+    R = 6379.1 #earth
+    for direction in path:
+        bearing = math.radians(direction)
+        #choose a distance based on direction to get us into the adjoining cell
+        if direction in [0, 180]:
+            distance = 0.305 #approx distance in km from centroid of cell to next NS cell centroid
+        elif direction in [90,270]:
+            distance = 0.213 #approx distance in km from centroid of cell to next EW cell centroid
+
+        lat1 = math.radians(origin_lat)
+        lng1 = math.radians(origin_lng)
+
+        lat2 = math.asin( math.sin(lat1)*math.cos(distance/R) +
+          math.cos(lat1)*math.sin(distance/R)*math.cos(bearing))
+        lng2 = lng1 + math.atan2(math.sin(bearing)*math.sin(distance/R)*math.cos(lat1),
+          math.cos(distance/R)-math.sin(lat1)*math.sin(lat2))
+      
+        lat2 = math.degrees(lat2)
+        lng2 = math.degrees(lng2)
+   
+        new_cell = CellId.from_lat_lng(LatLng.from_degrees(lat2, lng2)).parent(15)
+        walk.append(new_cell.id())
+
+        origin_lat = lat2
+        origin_lng = lng2
+  
+    #be sure that whatever walk length is here that you set the length of f2 in the request to be the same
+    return walk
 
 
 API_URL = 'https://pgorelease.nianticlabs.com/plfe/rpc'
@@ -53,13 +80,13 @@ FLOAT_LAT = 0
 FLOAT_LONG = 0
 
 def f2i(float):
-  return struct.unpack('<Q', struct.pack('<d', float))[0]
+    return struct.unpack('<Q', struct.pack('<d', float))[0]
 
 def f2h(float):
-  return hex(struct.unpack('<Q', struct.pack('<d', float))[0])
+    return hex(struct.unpack('<Q', struct.pack('<d', float))[0])
 
 def h2f(hex):
-  return struct.unpack('<d', struct.pack('<Q', int(hex,16)))[0]
+    return struct.unpack('<d', struct.pack('<Q', int(hex,16)))[0]
 
 def set_location(location_name):
     geolocator = GoogleV3()
@@ -303,7 +330,7 @@ def heartbeat(api_endpoint, access_token, response, login_type):
     m1.type = 106
     m = pokemon_pb2.RequestEnvelop.MessageQuad()
     m.f1 = ''.join(map(encode, walk))
-    m.f2 = "\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000"
+    m.f2 = b'\0' * len(walk) #"\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000"
     m.lat = COORDS_LATITUDE
     m.long = COORDS_LONGITUDE
     m1.message = m.SerializeToString()
