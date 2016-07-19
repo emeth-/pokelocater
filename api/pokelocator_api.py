@@ -290,7 +290,7 @@ def login_ptc(username, password):
         'execution': jdata['execution'],
         '_eventId': 'submit',
         'username': username,
-        'password': password[0:15],
+        'password': password
     }
     r1 = SESSION.post(LOGIN_URL, data=data, headers=head)
 
@@ -330,7 +330,7 @@ def heartbeat(api_endpoint, access_token, response, login_type):
     m1.type = 106
     m = pokemon_pb2.RequestEnvelop.MessageQuad()
     m.f1 = ''.join(map(encode, walk))
-    m.f2 = b'\0' * len(walk) #"\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000"
+    m.f2 = b'\0' * len(walk)
     m.lat = COORDS_LATITUDE
     m.long = COORDS_LONGITUDE
     m1.message = m.SerializeToString()
@@ -459,7 +459,7 @@ def main(location=None, direction=None):
     set_location_coords(original_lat, original_long, 0)
 
     visible = []
-    print 'hs is ' +str(hs)
+
     for hh in hs:
         for cell in hh.cells:
             for wild in cell.WildPokemon:

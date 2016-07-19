@@ -97,10 +97,6 @@ TEMPLATE_DEBUG = True
 TEMPLATE_DIRS = (os.path.join(os.path.dirname(__file__), '..', 'static').replace('\\','/'),)
 
 
-TEMPLATE_DEBUG = True
-TEMPLATE_DIRS = os.path.join(BASE_DIR, '../static'),
-
-
 if os.environ.get('IS_HEROKU_SERVER', False): # $ heroku config:add IS_HEROKU_SERVER='1'
     MIDDLEWARE_CLASSES += ('custom_middleware.ForceSSL',)
     os.environ['HTTPS'] = "on"
