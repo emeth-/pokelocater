@@ -215,8 +215,8 @@ function build_map_update(location) {
 				update_position();
 			}, refreshRate);
 		},
-		error: function() {
-			show_loader('Error while attempting to retrieve poke locations');
+		error: function(e, type, message) {
+			show_loader('Error while attempting to retrieve poke locations, reason:' + message);
 			console.log(arguments);
 			setTimeout(function(){
 				hide_loader();
