@@ -67,8 +67,7 @@ function map_api_loaded() {
     update_position();
 }
 
-function add_player(location){
-	var position = new google.maps.LatLng(location.coords.latitude, location.coords.longitude);
+function add_player(position){
 	return add_marker(
 		{
 			name: 'You',
@@ -234,10 +233,12 @@ function handler(location) {
 	else {
 		build_map_update(location);
 	}
+	var position = new google.maps.LatLng(location.coords.latitude, location.coords.longitude);
 	if(player === null){
-		player = add_player(location);
+		player = add_player(position);
 	}else{
-		player.setPosition(location);
+		
+		player.setPosition(position);
 	}
 }
 
