@@ -227,16 +227,16 @@ function build_map_update(location) {
 }
 
 function handler(location) {
-	if(player === null){
-		player = add_player(location);
-	}else{
-		player.setPosition(location);
-	}
 	if (first_load) {
         build_initial_map(location);
     }
 	else {
 		build_map_update(location);
+	}
+	if(player === null){
+		player = add_player(location);
+	}else{
+		player.setPosition(location);
 	}
 }
 
