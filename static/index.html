@@ -67,11 +67,12 @@ function map_api_loaded() {
     update_position();
 }
 
-function add_player(position){
+function add_player(location){
+	var position = new google.maps.LatLng(location.coords.latitude, location.coords.longitude);
 	return add_marker(
 		{
 			name: 'You',
-			position:position,
+			position: position,
 			ico:'/static/poke/trainer.gif'
 		}
 	);
