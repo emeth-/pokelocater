@@ -59,9 +59,7 @@ var player = null;
 jQuery(function($) {
     // Asynchronously Load the map API 
     var script = document.createElement('script');
-    //script.src = '//maps.googleapis.com/maps/api/js?key={{GMAPS_API_KEY}}&sensor=false&callback=map_api_loaded';
-	script.src = '//maps.googleapis.com/maps/api/js?key=AIzaSyBARDF5CYQ0KFLobpsWooBKSt24UaHi55Y&sensor=false&callback=map_api_loaded';
-	 
+    script.src = '//maps.googleapis.com/maps/api/js?key={{GMAPS_API_KEY}}&sensor=false&callback=map_api_loaded';
 	document.body.appendChild(script);
 });
 
