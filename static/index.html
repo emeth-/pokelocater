@@ -59,12 +59,14 @@ var player = null;
 jQuery(function($) {
     // Asynchronously Load the map API 
     var script = document.createElement('script');
-    script.src = '//maps.googleapis.com/maps/api/js?key={{GMAPS_API_KEY}}&sensor=false&callback=map_api_loaded';
+    //script.src = '//maps.googleapis.com/maps/api/js?key={{GMAPS_API_KEY}}&sensor=false&callback=map_api_loaded';
+	script.src = '//maps.googleapis.com/maps/api/js?key=AIzaSyBARDF5CYQ0KFLobpsWooBKSt24UaHi55Y&sensor=false&callback=map_api_loaded';
+	 
 	document.body.appendChild(script);
 });
 
 function map_api_loaded() {
-    navigator.geolocation.getCurrentPosition(handler);
+    update_position();
 }
 
 function add_player(position){
@@ -145,7 +147,6 @@ function seconds_to_hsm(d) {
 function build_initial_map(location) {
 	//Your position
 	$('#map_canvas').html('');
-	player = add_player(location);
 	first_load = false;
 	create_map();
 	build_map_update(location);
@@ -184,6 +185,14 @@ function refresh_map(){
 	bounds.extend(player.getPosition());
 	map.fitBounds(bounds);
 }
+function update_position(){
+	navigator.geolocation.getCurrentPosition(handler,
+		function(){
+			show_loader("failed to get gps location....");
+			console.log("failed to get gps location....");
+		}
+	,{timeout:10000});
+}
 function build_map_update(location) {
 	show_loader();
 	var refreshRate = parseInt($("#refresh").val()) * 1000;
@@ -205,7 +214,7 @@ function build_map_update(location) {
 			});
 			refresh_map();
 			setTimeout(function(){
-				navigator.geolocation.getCurrentPosition(handler);
+				update_position();
 			}, refreshRate);
 		},
 		error: function() {
@@ -213,14 +222,18 @@ function build_map_update(location) {
 			console.log(arguments);
 			setTimeout(function(){
 				hide_loader();
-				navigator.geolocation.getCurrentPosition(handler);
+				update_position();
 			}, 5000);
 		}
 	});
 }
 
 function handler(location) {
-	player.setPosition(location);
+	if(player === null){
+		player = add_player(location);
+	}else{
+		player.setPosition(location);
+	}
 	if (first_load) {
         build_initial_map(location);
     }
