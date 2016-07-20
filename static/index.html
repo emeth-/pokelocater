@@ -14,63 +14,139 @@ body { height: 100%; margin: 0px; padding: 0px }
     width: 100%;
     height: 100%;
 }
+#loader{
+	display:none;
+	top:5px;
+	left:50%;
+	transform: translateX(-50%);
+	
+}
+#loader.show{
+	display:block;
+}
+#control_panel, #loader{
+	z-index: 999;
+	position:fixed;
+    font-family: SANS-SERIF;
+    background-color: #fff;
+	border-radius:10px;
+    padding: 20px;
+    opacity: .6;
+}
+#control_panel{
+	right:5px;
+	top:5px;
+}
+#refresh_rate{
+	width: 40px;
+    font-size: 14px;
+}
 </style>
-
+<div id="loader">
+	Please wait... searching for pokemon.
+</div>
+<div id="control_panel">
+	Refresh Every(sec)<br/> <input id="refresh_rate" type="number" value="30"/>
+</div>
 <div id="map_wrapper">
     <div id="map_canvas" class="mapping">Detecting location...</div>
 </div>
 
 <script>
-
 var markers = [];
-var infoWindowContent = [];
-var marker_images = [];
 var first_load = true;
-
+var position = null;
+var bounds = null;
 jQuery(function($) {
     // Asynchronously Load the map API 
     var script = document.createElement('script');
     script.src = "//maps.googleapis.com/maps/api/js?key={{GMAPS_API_KEY}}&sensor=false&callback=map_api_loaded";
-    document.body.appendChild(script);
+	document.body.appendChild(script);
 });
 
 function map_api_loaded() {
     navigator.geolocation.getCurrentPosition(handler);
-	
-	//var fake_location_coords = {
-	//	latitude: "35.6894",
-	//	longitude: "139.692"
-	//};
-	//var fake_location = {
-	//	"coords": fake_location_coords
-	//}
-	//handler(fake_location);
 }
-
+function add_player(){
+	add_marker(
+		{
+			name: "You",
+			latitude:position.coords.latitude,
+			longitude:position.coords.longitude
+		},
+		'/static/poke/trainer.gif',
+		'<div class="info_content"><h3>You</h3></div>'
+	);
+}
+function add_marker(data, ico, content){
+	if(ico === undefined){
+		ico = "/static/poke/"+data.id+".ico";
+	}
+	if(content === undefined){
+		content = '<div class="info_content">' +
+			'<h3>'+data.name+'</h3>' +
+			'<p>will be there for another '+data.time_left+' seconds.</p>' +        
+			'</div>'
+	}
+	
+	var position = new google.maps.LatLng(data.latitude, data.longitude);
+	bounds.extend(position);
+	var marker = new google.maps.Marker({
+		position: position,
+		map: map,
+		title: data.name,
+		icon: {
+			url: ico,
+			scaledSize: data.name === "You" ? new google.maps.Size(60, 60) : new google.maps.Size(120, 120)  
+		}
+	});
+	var infoWindow = new google.maps.InfoWindow();
+	var listener = google.maps.event.addListener(marker, 'click', (function(marker, i) {
+		return function() {
+			infoWindow.setContent(markers[i].content);
+			infoWindow.open(map, marker);
+		}
+	})(marker, markers.length));
+	
+	markers.push({marker:marker, content:content, listener:listener});
+	
+	return marker;
+}
 function build_initial_map(location) {
 	//Your position
 	$('#map_canvas').html('');
-	var marker_obj = ["Ashe", location.coords.latitude,location.coords.longitude];
-	markers.push(marker_obj);
-	infoWindowContent_obj = ['<div class="info_content"><h3>You</h3></div>'];
-	infoWindowContent.push(infoWindowContent_obj);
-	marker_images.push("/static/poke/trainer.gif");
+	bounds = new google.maps.LatLngBounds();
 	create_map();
 	first_load = false;
 	build_map_update(location);
 }
-
-function build_map_update(location) {
+function show_loader(msg){
+	$("#loader").addClass("show");
+	if(msg === undefined){
+		msg = 'Please wait... searching for pokemon.';
+	}
+	$("#loader").html(msg);
+}
+function hide_loader(){
+	$("#loader").removeClass("show");
+}
+function clear_markers(){
+	for (var i = 0; i < markers.length; i++) {
+		google.maps.event.removeListener(markers[i].listener);
+		markers[i].marker.setMap(null);
+		
+	}
 	markers = [];
-	infoWindowContent = [];
 	marker_images = [];
-	
-	var marker_obj = ["Ashe", location.coords.latitude,location.coords.longitude];
-	markers.push(marker_obj);
-	infoWindowContent_obj = ['<div class="info_content"><h3>You</h3></div>'];
-	infoWindowContent.push(infoWindowContent_obj);
-	marker_images.push("/static/poke/trainer.gif");
-	
+	bounds = new google.maps.LatLngBounds();
+}
+function refresh_map(){
+	// Automatically center the map fitting all markers on the screen
+	map.fitBounds(bounds);
+}
+function build_map_update(location) {
+	show_loader();
+	var refreshRate = parseInt($("#refresh").val()) * 1000;
 	$.ajax({ 
 		type: 'POST', 
 		url: '/get_poke', 
@@ -80,23 +156,23 @@ function build_map_update(location) {
 		}, 
 		dataType: 'json',
 		success: function (data) {
+			if(markers.length > 1){
+				clear_markers();
+			}
+			add_player();
+			hide_loader();
 			console.log("pokemon_data", data.data);
 
 			$.each(data.data, function(k, v) {
-				marker_obj = [v.name, v.latitude,v.longitude];
-				markers.push(marker_obj);
-				infoWindowContent_obj = ['<div class="info_content">' +
-		'<h3>'+v.name+'</h3>' +
-		'<p>will be there for another '+v.time_left+' seconds.</p>' +        '</div>'];
-				infoWindowContent.push(infoWindowContent_obj);
-				marker_images.push("/static/poke/"+v.id+".ico");
+				add_marker(v);
 			});
-            refresh_map_with_new_data();
+			refresh_map();
 			setTimeout(function(){
 				navigator.geolocation.getCurrentPosition(handler);
-			}, 30000);
+			}, refreshRate);
 		},
 		error: function() {
+			hide_loader();
 			console.log('Error while attempting to retrieve poke locations');
 			setTimeout(function(){
 				navigator.geolocation.getCurrentPosition(handler);
@@ -105,12 +181,8 @@ function build_map_update(location) {
 	});
 }
 
-function refresh_map_with_new_data() {
-	$('#map_canvas').html('');
-	create_map();
-}
-
 function handler(location) {
+	position = location;
 	if (first_load) {
         build_initial_map(location);
     }
@@ -121,7 +193,7 @@ function handler(location) {
 
 var map;
 function create_map() {
-    var bounds = new google.maps.LatLngBounds();
+    
     var mapOptions = {
         mapTypeId: 'roadmap'
     };
@@ -129,44 +201,6 @@ function create_map() {
     // Display a map on the page
     map = new google.maps.Map(document.getElementById("map_canvas"), mapOptions);
     map.setTilt(45);
-        
-    // Display multiple markers on a map
-    var infoWindow = new google.maps.InfoWindow(), marker, i;
-    
-    // Loop through our array of markers & place each one on the map  
-    for( i = 0; i < markers.length; i++ ) {
-        var position = new google.maps.LatLng(markers[i][1], markers[i][2]);
-        bounds.extend(position);
-		var size;
-		if (i == 0) {
-            size = new google.maps.Size(60, 60);
-        }
-		else {
-			size = new google.maps.Size(120, 120);
-		}
-        marker = new google.maps.Marker({
-			position: position,
-			map: map,
-			title: markers[i][0],
-			icon: {
-				url: marker_images[i],
-				scaledSize: size  
-			}
-		});
-
-        // Allow each marker to have an info window
-        google.maps.event.addListener(marker, 'click', (function(marker, i) {
-            return function() {
-                infoWindow.setContent(infoWindowContent[i][0]);
-                infoWindow.open(map, marker);
-            }
-        })(marker, i));
-
-        // Automatically center the map fitting all markers on the screen
-		map.fitBounds(bounds);
-		//map.setCenter(new google.maps.LatLng(markers[0][1], markers[0][2]));
-    }
-
     // Override our map zoom level once our fitBounds function runs (Make sure it only runs once)
     var boundsListener = google.maps.event.addListener((map), 'bounds_changed', function(event) {
         map.setZoom(18);
