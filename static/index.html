@@ -203,7 +203,7 @@ function create_map() {
     map.setTilt(45);
     // Override our map zoom level once our fitBounds function runs (Make sure it only runs once)
     var boundsListener = google.maps.event.addListener((map), 'bounds_changed', function(event) {
-        map.setZoom(18);
+        map.setZoom(17);
         google.maps.event.removeListener(boundsListener);
     });
     
