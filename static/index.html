@@ -147,7 +147,7 @@ function build_initial_map(location) {
 	//Your position
 	$('#map_canvas').html('');
 	first_load = false;
-	create_map();
+	create_map(location);
 	build_map_update(location);
 }
 function show_loader(msg){
@@ -242,9 +242,14 @@ function handler(location) {
 }
 
 var map;
-function create_map() {
+function create_map(location) {
     var mapOptions = {
-        mapTypeId: 'roadmap'
+        mapTypeId: 'roadmap',
+		center:{
+			lat:location.coords.latitude, 
+			lng:location.coords.longitude
+		},
+		zoom: 17
     };
     // Display a map on the page
     map = new google.maps.Map(document.getElementById("map_canvas"), mapOptions);
@@ -254,7 +259,6 @@ function create_map() {
         map.setZoom(17);
         //google.maps.event.removeListener(boundsListener);
     });
-    
 }
 
 </script>
