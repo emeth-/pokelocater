@@ -54,7 +54,10 @@ body { height: 100%; margin: 0px; padding: 0px }
 	Please wait... searching for pokemon.
 </div>
 <div id="control_panel">
-	Refresh Every(sec)<br/> <input id="refresh_rate" type="number" value="30"/>
+	<strong>Refresh Every(sec)</strong><br/> <input id="refresh_rate" type="number" value="30"/>
+    <br/><br/><strong>Search By:</strong><br/>
+	<input type="radio" name="searchType" value="mylocation" checked/>My Location <br/>
+	<input type="radio" name="searchType" value="mapcenter"/>Map Center <br/>
 </div>
 <div id="map_wrapper">
     <div id="map_canvas" class="mapping">Detecting location...</div>
@@ -210,14 +213,18 @@ function clear_pokes(){
 }
 function refresh_map(){
 	// Automatically center the map fitting all pokes on the screen
-	var bounds = new google.maps.LatLngBounds();
-	//get all pokemon still alive.
-	var keys = Object.keys(pokes);
-	for (var i = 0; i < keys.length; i++) {
-		bounds.extend(pokes[keys[i]].marker.getPosition());
-	}
-	bounds.extend(player.getPosition());
-	map.fitBounds(bounds);
+
+    var mode = $("[name='searchType']:checked").val();
+    if(mode === "mylocation"){
+        var bounds = new google.maps.LatLngBounds();
+        //get all pokemon still alive.
+        var keys = Object.keys(pokes);
+        for (var i = 0; i < keys.length; i++) {
+            bounds.extend(pokes[keys[i]].marker.getPosition());
+        }
+        bounds.extend(player.getPosition());
+        map.fitBounds(bounds);
+    }
 }
 function update_position(){
 	console.log("updating position");
@@ -232,11 +239,17 @@ function update_position(){
 function build_map_update(location) {
 	info();
 	var refreshRate = parseInt($("#refresh_rate").val()) * 1000;
+    var loc = location.coords.latitude.toString()+', '+location.coords.longitude.toString();
+    var mode = $("[name='searchType']:checked").val();
+    if(mode !== "mylocation"){
+        var position = map.getCenter();
+        loc = position.lat().toString()+', '+position.lng().toString();
+    }
 	$.ajax({ 
 		type: 'POST', 
 		url: '/get_poke', 
 		data: {
-			location: location.coords.latitude.toString()+', '+location.coords.longitude.toString(),
+			location: loc,
 			direction: ""
 		}, 
 		dataType: 'json',
