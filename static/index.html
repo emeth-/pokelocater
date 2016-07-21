@@ -43,6 +43,7 @@ body { height: 100%; margin: 0px; padding: 0px }
     opacity: .6;
 }
 #control_panel{
+    width:200px;
 	right:5px;
 	top:5px;
 }
@@ -50,15 +51,29 @@ body { height: 100%; margin: 0px; padding: 0px }
 	width: 40px;
     font-size: 14px;
 }
+.auto-search, .manual-search{
+    display:none;
+}
+#control_panel.mylocation .auto-search{
+    display:block;
+}
+#control_panel.mapcenter .manual-search{
+    display:block;
+}
 </style>
 <div id="loader">
 	Please wait... searching for pokemon.
 </div>
 <div id="control_panel">
-	<strong>Refresh every:</strong><br/> <input id="refresh_rate" type="number" value="30"/> sec
+    <div class="auto-search">
+	    <strong>Refresh every:</strong><br/> <input id="refresh_rate" type="number" value="30"/> sec
+    </div>
+    <div class="manual-search">
+        <button id="manual_search">Search</button>
+    </div>
     <br/><br/><strong>Search by:</strong><br/>
-	<input type="radio" name="searchType" value="mylocation" checked/> My location<br/>
-	<input type="radio" name="searchType" value="mapcenter"/> Map center<br/>
+	<input type="radio" name="searchType" value="mylocation" checked/> My Location<br/>
+	<input type="radio" name="searchType" value="mapcenter"/> Map Center<br/>
 </div>
 <div id="map_wrapper">
     <div id="map_canvas" class="mapping">Detecting location...</div>
@@ -70,18 +85,45 @@ var first_load = true;
 var player = null;
 var lastPosition = null;
 var lastMessage = null;
+var mode = null;
+var infoWindow = null;
+var infoWindowIntervalId = null;
+var autoSearchTimeoutId = null;
 jQuery(function($) {
     // Asynchronously Load the map API 
     var script = document.createElement('script');
     script.src = '//maps.googleapis.com/maps/api/js?key={{GMAPS_API_KEY}}&sensor=false&callback=map_api_loaded';
 	document.body.appendChild(script);
+	$("[name='searchType']").on('change', function(){
+		update_mode();
+	});
+    $("#manual_search").on('click', function(){
+        build_map_update(lastPosition);
+    });
+    update_mode();
 });
-
+function update_mode(){
+    mode = $("[name='searchType']:checked").val();
+    if(autoSearchTimeoutId !== null){
+        clearTimeout(autoSearchTimeoutId);
+    }
+    console.log(mode);
+    $("#control_panel").removeClass("mylocation").removeClass("mapcenter").addClass(mode);
+    if(mode === "mylocation"){
+        auto_search();
+    }
+}
+function auto_search(){
+    var refreshRate = parseInt($("#refresh_rate").val()) * 1000;
+    autoSearchTimeoutId = setTimeout(function(){
+        build_map_update(lastPosition);
+        auto_search();
+    }, refreshRate); 
+}
 function map_api_loaded() {
 	setInterval(function(){
 		update_position();	
 	}, 5000);
-    
 }
 
 function add_player(position){
@@ -130,17 +172,17 @@ function add_pokemon(data){
 	}
 	var marker = add_marker(data);
 	var listener = google.maps.event.addListener(marker, 'click', (function(marker, uid) {
-		var infoWindow = new google.maps.InfoWindow();
+		infoWindow = new google.maps.InfoWindow();
 		return function() {
+            if(infoWindow !== null){
+                clearInterval(infoWindowIntervalId);
+                infoWindow.close();
+            }
+			infoWindow.setContent(pokes[uid].content(pokes[uid].data));
 			infoWindow.open(map, marker);
-			var interval = setInterval(function(){
+			infoWindowIntervalId = setInterval(function(){
 				infoWindow.setContent(pokes[uid].content(pokes[uid].data));
 			}, 1000);
-			//close window after 5 seconds.
-			setTimeout(function(){
-				clearInterval(interval);
-				infoWindow.close();
-			}, 5000);
 		}
 	})(marker, data.uid));
 	
@@ -230,8 +272,6 @@ function clear_pokes(){
 }
 function refresh_map(){
 	// Automatically center the map fitting all pokes on the screen
-
-    var mode = $("[name='searchType']:checked").val();
     if(mode === "mylocation"){
         var bounds = new google.maps.LatLngBounds();
         //get all pokemon still alive.
@@ -255,12 +295,23 @@ function update_position(){
 }
 function build_map_update(location) {
 	info();
-	var refreshRate = parseInt($("#refresh_rate").val()) * 1000;
+	
     var loc = location.coords.latitude.toString()+', '+location.coords.longitude.toString();
-    var mode = $("[name='searchType']:checked").val();
-    if(mode !== "mylocation"){
+    var searchMarker = null;
+    if (mode === "mapcenter"){
         var position = map.getCenter();
         loc = position.lat().toString()+', '+position.lng().toString();
+        var searchMarker = new google.maps.Circle({
+            strokeColor: '#FF0000',
+            strokeOpacity: 0.8,
+            strokeWeight: 2,
+            fillColor: '#FF0000',
+            fillOpacity: 0.35,
+            label:"Searching Area",
+            map: map,
+            center: position,
+            radius: 30
+          });
     }
 	$.ajax({ 
 		type: 'POST', 
@@ -282,18 +333,17 @@ function build_map_update(location) {
 				add_pokemon(v);
 			});
 			refresh_map();
-			console.log(refreshRate);
-			setTimeout(function(){
-				build_map_update(lastPosition);
-			}, refreshRate);
+            if(searchMarker !== null){
+                searchMarker.setMap(null);
+            }
 		},
 		error: function(e, type, message) {
 			message = message !== '' ? message : "Unknown";
 			error('Error while attempting to retrieve Pokémon locations. Reason: ' + message);
 			console.log(arguments);
-			setTimeout(function(){
-				build_map_update(lastPosition);
-			}, 5000);
+            if(searchMarker !== null){
+                searchMarker.setMap(null);
+            }
 		}
 	});
 }
