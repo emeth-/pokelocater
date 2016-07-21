@@ -1,6 +1,7 @@
 
 <head>
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
+<link rel="shortcut icon" href="favicon/favicon.png"/>
 </head>
 
 <style>
@@ -14,165 +15,369 @@ body { height: 100%; margin: 0px; padding: 0px }
     width: 100%;
     height: 100%;
 }
+#loader{
+	display:none;
+	bottom:5px;
+	left:50%;
+	transform: translateX(-50%);
+	
+}
+#loader.show{
+	display:block;
+	font-weight:bold;
+}
+#loader.green{
+	background-color:#0F0;
+}
+#loader.red {
+	background-color:#F00;
+	color:white;
+}
+#control_panel, #loader{
+	z-index: 999;
+	position:fixed;
+    font-family: SANS-SERIF;
+    background-color: #fff;
+	border-radius:10px;
+    padding: 20px;
+    opacity: .6;
+}
+#control_panel{
+    width:200px;
+	left:5px;
+	bottom:5px;
+}
+#refresh_rate{
+	width: 40px;
+    font-size: 14px;
+}
+.auto-search, .manual-search{
+    display:none;
+}
+#control_panel.mylocation .auto-search{
+    display:block;
+}
+#control_panel.mapcenter .manual-search{
+    display:block;
+}
 </style>
-
+<div id="loader">
+	Please wait... searching for pokemon.
+</div>
+<div id="control_panel">
+    <div class="auto-search">
+	    <strong>Refresh every:</strong><br/> <input id="refresh_rate" type="number" value="30"/> sec
+    </div>
+    <div class="manual-search">
+        <button id="manual_search">Search</button>
+    </div>
+    <br/><br/><strong>Search by:</strong><br/>
+	<input type="radio" name="searchType" value="mylocation" checked/> My Location<br/>
+	<input type="radio" name="searchType" value="mapcenter"/> Map Center<br/>
+</div>
 <div id="map_wrapper">
     <div id="map_canvas" class="mapping">Detecting location...</div>
 </div>
 
 <script>
-
-var markers = [];
-var infoWindowContent = [];
-var marker_images = [];
+var pokes = {};
 var first_load = true;
-
+var player = null;
+var lastPosition = null;
+var lastMessage = null;
+var mode = null;
+var infoWindow = null;
+var infoWindowIntervalId = null;
+var autoSearchTimeoutId = null;
 jQuery(function($) {
     // Asynchronously Load the map API 
     var script = document.createElement('script');
-    script.src = "//maps.googleapis.com/maps/api/js?key={{GMAPS_API_KEY}}&sensor=false&callback=map_api_loaded";
-    document.body.appendChild(script);
+    script.src = '//maps.googleapis.com/maps/api/js?key={{GMAPS_API_KEY}}&sensor=false&callback=map_api_loaded';
+	document.body.appendChild(script);
+	$("[name='searchType']").on('change', function(){
+		update_mode();
+	});
+    $("#manual_search").on('click', function(){
+        build_map_update(lastPosition);
+    });
+    update_mode();
 });
-
+function update_mode(){
+    mode = $("[name='searchType']:checked").val();
+    if(autoSearchTimeoutId !== null){
+        clearTimeout(autoSearchTimeoutId);
+    }
+    console.log(mode);
+    $("#control_panel").removeClass("mylocation").removeClass("mapcenter").addClass(mode);
+    if(mode === "mylocation"){
+        auto_search();
+    }
+}
+function auto_search(){
+    var refreshRate = parseInt($("#refresh_rate").val()) * 1000;
+    autoSearchTimeoutId = setTimeout(function(){
+        build_map_update(lastPosition);
+        auto_search();
+    }, refreshRate); 
+}
 function map_api_loaded() {
-    navigator.geolocation.getCurrentPosition(handler);
-	
-	//var fake_location_coords = {
-	//	latitude: "35.6894",
-	//	longitude: "139.692"
-	//};
-	//var fake_location = {
-	//	"coords": fake_location_coords
-	//}
-	//handler(fake_location);
+	setInterval(function(){
+		update_position();	
+	}, 5000);
 }
 
+function add_player(position){
+	return add_marker(
+		{
+			name: 'You',
+			position: position,
+			ico:'/static/poke/trainer.gif'
+		}
+	);
+}
+function add_marker(data){
+	var marker = new google.maps.Marker({
+		position: data.position,
+		map: map,
+		title: data.name,
+		icon: {
+			url: data.ico
+		}
+	});
+	return marker;
+}
+
+function add_pokemon(data){
+	data.uid = data.encounter_id + data.spawn_point_id;
+	data.ico = '/static/poke/' + data.id + '.png';
+	data.position = new google.maps.LatLng(data.latitude, data.longitude);
+	
+	//we already added this pokemon
+	if(pokes[data.uid] !== undefined){
+		var p = pokes[data.uid];
+		if(p.data.latitude !== data.latitude || p.data.latitude !== data.longitude){
+			p.marker.setPosition(data.position);
+			p.data.latitude = data.latitude;
+			p.data.longitude = data.longitude;
+			console.log("pokemon '" + data.name + "' moved!", p);
+		}
+		return;
+	}
+	
+	var content = function (data){
+		return '<div class="info_content">' +
+		'<h3>'+data.name+'</h3>' +
+		'<p>Disappears at: ' + get_time_left(data.date_left) + '</p>' +        
+		'</div>'
+	}
+	var marker = add_marker(data);
+	var listener = google.maps.event.addListener(marker, 'click', (function(marker, uid) {
+		infoWindow = new google.maps.InfoWindow();
+		return function() {
+            if(infoWindow !== null){
+                clearInterval(infoWindowIntervalId);
+                infoWindow.close();
+            }
+			infoWindow.setContent(pokes[uid].content(pokes[uid].data));
+			infoWindow.open(map, marker);
+			infoWindowIntervalId = setInterval(function(){
+				infoWindow.setContent(pokes[uid].content(pokes[uid].data));
+			}, 1000);
+		}
+	})(marker, data.uid));
+	
+	var timeLeft = parseInt(data.time_left);
+	var pokemon = {marker:marker, content:content, listener:listener, data:data};
+	pokemon.data.date_left = new Date();
+	pokemon.data.date_left.setSeconds(pokemon.data.date_left.getSeconds() + timeLeft);
+	setTimeout(function(){
+		clear_pokemon(pokemon);	
+	}, timeLeft * 1000);
+	pokes[data.uid] = pokemon;
+	
+	return pokemon;
+}
+function get_time_left(d){
+    if (d.getHours() < 12) {
+        var ampm = ' AM';
+        var hours = d.getHours();
+        if (hours == 0) hours = 12;
+    }
+	else {
+		var ampm = ' PM';
+		var hours = d.getHours();
+		if (hours > 12) hours -= 12;
+	}
+	var minutes = d.getMinutes().toString();
+	if (d.getMinutes() < 10) minutes = '0' + minutes;
+	var seconds = d.getSeconds().toString();
+	if (d.getSeconds() < 10) seconds = '0' + seconds;
+	var seconds_left = (d.getTime() - (new Date()).getTime()) / 1000;
+	return hours + ':' + minutes + ':' + seconds + ampm + ' (' + seconds_to_hms(seconds_left) + ')';
+}
+function seconds_to_hms(d) {
+	d = Number(d);
+	var h = Math.floor(d / 3600);
+	var m = Math.floor(d % 3600 / 60);
+	var s = Math.floor(d % 3600 % 60);
+	var hours = (h == 1 ? ' hour, ' : ' hours, ');
+	var minutes = (m == 1 ? ' minute, ' : ' minutes, ');
+	var seconds = (s == 1 ? ' second' : ' seconds');
+	return ((h > 0 ? h + hours : '') + m + minutes + s + seconds);
+}
 function build_initial_map(location) {
 	//Your position
 	$('#map_canvas').html('');
-	var marker_obj = ["Ashe", location.coords.latitude,location.coords.longitude];
-	markers.push(marker_obj);
-	infoWindowContent_obj = ['<div class="info_content"><h3>You</h3></div>'];
-	infoWindowContent.push(infoWindowContent_obj);
-	marker_images.push("/static/poke/trainer.gif");
-	create_map();
 	first_load = false;
+	create_map(location);
 	build_map_update(location);
 }
-
+function info(msg){
+	show_message(msg);
+}
+function error(msg){
+	show_message(msg, "red");
+}
+function success(msg){
+	show_message(msg, "green")
+}
+function get_message(){
+	return $("#loader").html();
+}
+function show_message(msg, addClass){
+	$("#loader").removeClass("green").removeClass("red").addClass("show");
+	if(addClass !== undefined){
+		$("#loader").addClass(addClass);
+	}
+	if(msg === undefined){
+		msg = 'Searching for Pokémon...';
+	}
+	$("#loader").html(msg);
+}
+function hide_message(){
+	$("#loader").removeClass("show").removeClass("green").removeClass("red");
+}
+function clear_pokemon(pokemon){
+	google.maps.event.removeListener(pokemon.listener);
+	pokemon.marker.setMap(null);
+	//remove from available pokemon.
+	delete pokes[pokemon.data.uid];
+}
+function clear_pokes(){
+	var keys = Object.keys(pokes);
+	for (var i = 0; i < keys.length; i++) {
+		clear_pokemon(pokes[keys[i]]);
+	}
+	pokes = {};
+}
+function refresh_map(){
+	// Automatically center the map fitting all pokes on the screen
+    if(mode === "mylocation"){
+        var bounds = new google.maps.LatLngBounds();
+        //get all pokemon still alive.
+        var keys = Object.keys(pokes);
+        for (var i = 0; i < keys.length; i++) {
+            bounds.extend(pokes[keys[i]].marker.getPosition());
+        }
+        bounds.extend(player.getPosition());
+        map.fitBounds(bounds);
+    }
+}
+function update_position(){
+	console.log("updating position");
+	navigator.geolocation.getCurrentPosition(update_player,
+		function(){
+			lastMessage = get_message();
+			error("Failed to get GPS location.");
+			console.log("failed to get gps location....");
+		}
+	,{timeout:30000});
+}
 function build_map_update(location) {
-	markers = [];
-	infoWindowContent = [];
-	marker_images = [];
+	info();
 	
-	var marker_obj = ["Ashe", location.coords.latitude,location.coords.longitude];
-	markers.push(marker_obj);
-	infoWindowContent_obj = ['<div class="info_content"><h3>You</h3></div>'];
-	infoWindowContent.push(infoWindowContent_obj);
-	marker_images.push("/static/poke/trainer.gif");
-	
+    var loc = location.coords.latitude.toString()+', '+location.coords.longitude.toString();
+    var searchMarker = null;
+    if (mode === "mapcenter"){
+        var position = map.getCenter();
+        loc = position.lat().toString()+', '+position.lng().toString();
+        var searchMarker = new google.maps.Circle({
+            strokeColor: '#FF0000',
+            strokeOpacity: 0.8,
+            strokeWeight: 2,
+            fillColor: '#FF0000',
+            fillOpacity: 0.35,
+            label:"Searching Area",
+            map: map,
+            center: position,
+            radius: 30
+          });
+    }
 	$.ajax({ 
 		type: 'POST', 
 		url: '/get_poke', 
 		data: {
-			location: location.coords.latitude.toString()+', '+location.coords.longitude.toString(),
+			location: loc,
 			direction: ""
 		}, 
 		dataType: 'json',
 		success: function (data) {
+			var count = data ? data.data.length : 0;
+			success("Found " + count + " Pokémon!");
+			setTimeout(function(){
+				hide_message();
+			}, 10000);
 			console.log("pokemon_data", data.data);
 
 			$.each(data.data, function(k, v) {
-				marker_obj = [v.name, v.latitude,v.longitude];
-				markers.push(marker_obj);
-				infoWindowContent_obj = ['<div class="info_content">' +
-		'<h3>'+v.name+'</h3>' +
-		'<p>will be there for another '+v.time_left+' seconds.</p>' +        '</div>'];
-				infoWindowContent.push(infoWindowContent_obj);
-				marker_images.push("/static/poke/"+v.id+".ico");
+				add_pokemon(v);
 			});
-            refresh_map_with_new_data();
-			setTimeout(function(){
-				navigator.geolocation.getCurrentPosition(handler);
-			}, 30000);
+			refresh_map();
+            if(searchMarker !== null){
+                searchMarker.setMap(null);
+            }
 		},
-		error: function() {
-			console.log('Error while attempting to retrieve poke locations');
-			setTimeout(function(){
-				navigator.geolocation.getCurrentPosition(handler);
-			}, 5000);
+		error: function(e, type, message) {
+			message = message !== '' ? message : "Unknown";
+			error('Error while attempting to retrieve Pokémon locations. Reason: ' + message);
+			console.log(arguments);
+            if(searchMarker !== null){
+                searchMarker.setMap(null);
+            }
 		}
 	});
 }
-
-function refresh_map_with_new_data() {
-	$('#map_canvas').html('');
-	create_map();
-}
-
-function handler(location) {
-	if (first_load) {
-        build_initial_map(location);
-    }
-	else {
-		build_map_update(location);
+function update_player(location){
+	if(lastMessage !== null){
+		show_message(lastMessage);
+		lastMessage = null;
+	}
+	lastPosition = location;
+	var position = new google.maps.LatLng(location.coords.latitude, location.coords.longitude);
+	if(map == null){
+		build_initial_map(location);
+	}
+	if(player === null){
+		player = add_player(position);
+	}else{
+		
+		player.setPosition(position);
 	}
 }
 
 var map;
-function create_map() {
-    var bounds = new google.maps.LatLngBounds();
+function create_map(location) {
     var mapOptions = {
-        mapTypeId: 'roadmap'
+        mapTypeId: 'roadmap',
+		center:{
+			lat:location.coords.latitude, 
+			lng:location.coords.longitude
+		},
+		zoom: 17
     };
-                    
     // Display a map on the page
     map = new google.maps.Map(document.getElementById("map_canvas"), mapOptions);
     map.setTilt(45);
-        
-    // Display multiple markers on a map
-    var infoWindow = new google.maps.InfoWindow(), marker, i;
-    
-    // Loop through our array of markers & place each one on the map  
-    for( i = 0; i < markers.length; i++ ) {
-        var position = new google.maps.LatLng(markers[i][1], markers[i][2]);
-        bounds.extend(position);
-		var size;
-		if (i == 0) {
-            size = new google.maps.Size(60, 60);
-        }
-		else {
-			size = new google.maps.Size(120, 120);
-		}
-        marker = new google.maps.Marker({
-			position: position,
-			map: map,
-			title: markers[i][0],
-			icon: {
-				url: marker_images[i],
-				scaledSize: size  
-			}
-		});
-
-        // Allow each marker to have an info window
-        google.maps.event.addListener(marker, 'click', (function(marker, i) {
-            return function() {
-                infoWindow.setContent(infoWindowContent[i][0]);
-                infoWindow.open(map, marker);
-            }
-        })(marker, i));
-
-        // Automatically center the map fitting all markers on the screen
-		map.fitBounds(bounds);
-		//map.setCenter(new google.maps.LatLng(markers[0][1], markers[0][2]));
-    }
-
-    // Override our map zoom level once our fitBounds function runs (Make sure it only runs once)
-    var boundsListener = google.maps.event.addListener((map), 'bounds_changed', function(event) {
-        map.setZoom(18);
-        google.maps.event.removeListener(boundsListener);
-    });
-    
 }
 
 </script>
