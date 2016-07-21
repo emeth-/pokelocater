@@ -55,10 +55,10 @@ body { height: 100%; margin: 0px; padding: 0px }
 	Please wait... searching for pokemon.
 </div>
 <div id="control_panel">
-	<strong>Refresh every (sec)</strong><br/> <input id="refresh_rate" type="number" value="30"/>
-    <br/><br/><strong>Search By:</strong><br/>
-	<input type="radio" name="searchType" value="mylocation" checked/> My Location<br/>
-	<input type="radio" name="searchType" value="mapcenter"/> Map Center<br/>
+	<strong>Refresh every:</strong><br/> <input id="refresh_rate" type="number" value="30"/> sec
+    <br/><br/><strong>Search by:</strong><br/>
+	<input type="radio" name="searchType" value="mylocation" checked/> My location<br/>
+	<input type="radio" name="searchType" value="mapcenter"/> Map center<br/>
 </div>
 <div id="map_wrapper">
     <div id="map_canvas" class="mapping">Detecting location...</div>
@@ -171,14 +171,14 @@ function get_time_left(d){
 	var seconds = d.getSeconds().toString();
 	if (d.getSeconds() < 10) seconds = '0' + seconds;
 	var seconds_left = (d.getTime() - (new Date()).getTime()) / 1000;
-	return 'Disappears at: ' + hours + ':' + minutes + ':' + seconds + ampm + ' (' + seconds_to_hms(seconds_left) + ')';
+	return hours + ':' + minutes + ':' + seconds + ampm + ' (' + seconds_to_hms(seconds_left) + ')';
 }
 function seconds_to_hms(d) {
 	d = Number(d);
 	var h = Math.floor(d / 3600);
 	var m = Math.floor(d % 3600 / 60);
 	var s = Math.floor(d % 3600 % 60);
-	return ((h > 0 ? h + ' hours, ' : '') + m + 'minutes, ' + s + 'seconds'); 
+	return ((h > 0 ? h + ' hours, ' : '') + m + ' minutes, ' + s + ' seconds');
 }
 function build_initial_map(location) {
 	//Your position
