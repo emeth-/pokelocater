@@ -68,8 +68,7 @@ var lastPosition = null;
 jQuery(function($) {
     // Asynchronously Load the map API 
     var script = document.createElement('script');
-    //script.src = '//maps.googleapis.com/maps/api/js?key={{GMAPS_API_KEY}}&sensor=false&callback=map_api_loaded';
-	script.src = '//maps.googleapis.com/maps/api/js?key=AIzaSyBARDF5CYQ0KFLobpsWooBKSt24UaHi55Y&sensor=false&callback=map_api_loaded';
+    script.src = '//maps.googleapis.com/maps/api/js?key={{GMAPS_API_KEY}}&sensor=false&callback=map_api_loaded';
 	document.body.appendChild(script);
 });
 
@@ -173,7 +172,7 @@ function success(msg){
 	show_message(msg, "green")
 }
 function show_message(msg, addClass){
-	$("#loader").addClass("show");
+	$("#loader").removeClass("green").removeClass("red").addClass("show");
 	if(addClass !== undefined){
 		$("#loader").addClass(addClass);
 	}
@@ -220,10 +219,10 @@ function update_position(){
 }
 function build_map_update(location) {
 	info();
-	var refreshRate = parseInt($("#refresh").val()) * 1000;
+	var refreshRate = parseInt($("#refresh_rate").val()) * 1000;
 	$.ajax({ 
 		type: 'POST', 
-		url: 'https://chrestlerpokelocater.herokuapp.com/get_poke', 
+		url: '/get_poke', 
 		data: {
 			location: location.coords.latitude.toString()+', '+location.coords.longitude.toString(),
 			direction: ""
@@ -234,22 +233,23 @@ function build_map_update(location) {
 			success("found " + count + " pokemon!");
 			setTimeout(function(){
 				hide_message();
-			}, 5000);
+			}, 10000);
 			console.log("pokemon_data", data.data);
 
 			$.each(data.data, function(k, v) {
 				add_pokemon(v);
 			});
 			refresh_map();
+			console.log(refreshRate);
 			setTimeout(function(){
 				build_map_update(lastPosition);
 			}, refreshRate);
 		},
 		error: function(e, type, message) {
-			error('Error while attempting to retrieve poke locations, reason:' + message);
+			message = message !== '' ? message : "Unknown";
+			error('Error while attempting to retrieve poke locations, reason: ' + message);
 			console.log(arguments);
 			setTimeout(function(){
-				hide_message();
 				build_map_update(lastPosition);
 			}, 5000);
 		}
