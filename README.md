@@ -3,6 +3,10 @@ PokeLocator
 
 ![](http://teachthe.net/topclipbox/2016-07-19_03-12-450E0G3L.png)
 
+The [stabile-mobile](https://github.com/emeth-/pokelocater/tree/stabile-mobile) branch has a stable version of the app, with a smaller scan radius around your immediate area that works great on mobile and heroku.
+
+The master branch has the latest develop version, which may or may not be stabile. It will have a larger scan radius, but may not work on Heroku due to Heroku's 30 second timeouts.
+
 ### Things you will need
 
 [Google Maps API Key](https://developers.google.com/maps/documentation/javascript/get-api-key#key)
