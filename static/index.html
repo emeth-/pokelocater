@@ -1,6 +1,7 @@
 
 <head>
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
+<link rel="shortcut icon" href="favicon/favicon.png"/>
 </head>
 
 <style>
@@ -107,7 +108,7 @@ function add_marker(data){
 
 function add_pokemon(data){
 	data.uid = data.encounter_id + data.spawn_point_id;
-	data.ico = '/static/poke/' + data.id + '.ico';
+	data.ico = '/static/poke/' + data.id + '.png';
 	data.position = new google.maps.LatLng(data.latitude, data.longitude);
 	
 	//we already added this pokemon
