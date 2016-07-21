@@ -55,10 +55,10 @@ body { height: 100%; margin: 0px; padding: 0px }
 	Please wait... searching for pokemon.
 </div>
 <div id="control_panel">
-	<strong>Refresh Every(sec)</strong><br/> <input id="refresh_rate" type="number" value="30"/>
+	<strong>Refresh every (sec)</strong><br/> <input id="refresh_rate" type="number" value="30"/>
     <br/><br/><strong>Search By:</strong><br/>
-	<input type="radio" name="searchType" value="mylocation" checked/>My Location <br/>
-	<input type="radio" name="searchType" value="mapcenter"/>Map Center <br/>
+	<input type="radio" name="searchType" value="mylocation" checked/> My Location<br/>
+	<input type="radio" name="searchType" value="mapcenter"/> Map Center<br/>
 </div>
 <div id="map_wrapper">
     <div id="map_canvas" class="mapping">Detecting location...</div>
@@ -99,8 +99,7 @@ function add_marker(data){
 		map: map,
 		title: data.name,
 		icon: {
-			url: data.ico,
-			scaledSize: data.name === 'You' ? new google.maps.Size(60, 60) : new google.maps.Size(120, 120)  
+			url: data.ico
 		}
 	});
 	return marker;
@@ -126,7 +125,7 @@ function add_pokemon(data){
 	var content = function (data){
 		return '<div class="info_content">' +
 		'<h3>'+data.name+'</h3>' +
-		'<p>will be there for another ' + get_time_left(data.date_left) + '.</p>' +        
+		'<p>Disappears at: ' + get_time_left(data.date_left) + '</p>' +        
 		'</div>'
 	}
 	var marker = add_marker(data);
@@ -157,15 +156,29 @@ function add_pokemon(data){
 	return pokemon;
 }
 function get_time_left(d){
-	var timeLeft = (d.getTime() - (new Date()).getTime()) / 1000;
-	return seconds_to_hsm(timeLeft);
+    if (d.getHours() < 12) {
+        var ampm = ' AM';
+        var hours = d.getHours();
+        if (hours == 0) hours = 12;
+    }
+	else {
+		var ampm = ' PM';
+		var hours = d.getHours();
+		if (hours > 12) hours -= 12;
+	}
+	var minutes = d.getMinutes().toString();
+	if (d.getMinutes() < 10) minutes = '0' + minutes;
+	var seconds = d.getSeconds().toString();
+	if (d.getSeconds() < 10) seconds = '0' + seconds;
+	var seconds_left = (d.getTime() - (new Date()).getTime()) / 1000;
+	return 'Disappears at: ' + hours + ':' + minutes + ':' + seconds + ampm + ' (' + seconds_to_hms(seconds_left) + ')';
 }
-function seconds_to_hsm(d) {
+function seconds_to_hms(d) {
 	d = Number(d);
 	var h = Math.floor(d / 3600);
 	var m = Math.floor(d % 3600 / 60);
 	var s = Math.floor(d % 3600 % 60);
-	return ((h > 0 ? h + ":" + (m < 10 ? "0" : "") : "") + m + ":" + (s < 10 ? "0" : "") + s); 
+	return ((h > 0 ? h + ' hours, ' : '') + m + 'minutes, ' + s + 'seconds'); 
 }
 function build_initial_map(location) {
 	//Your position
@@ -192,7 +205,7 @@ function show_message(msg, addClass){
 		$("#loader").addClass(addClass);
 	}
 	if(msg === undefined){
-		msg = 'Please wait... searching for pokemon.';
+		msg = 'Searching for Pokémon...';
 	}
 	$("#loader").html(msg);
 }
@@ -232,7 +245,7 @@ function update_position(){
 	navigator.geolocation.getCurrentPosition(update_player,
 		function(){
 			lastMessage = get_message();
-			error("failed to get gps location....");
+			error("Failed to get GPS location.");
 			console.log("failed to get gps location....");
 		}
 	,{timeout:30000});
@@ -256,7 +269,7 @@ function build_map_update(location) {
 		dataType: 'json',
 		success: function (data) {
 			var count = data ? data.data.length : 0;
-			success("found " + count + " pokemon!");
+			success("Found " + count + " Pokémon!");
 			setTimeout(function(){
 				hide_message();
 			}, 10000);
@@ -273,7 +286,7 @@ function build_map_update(location) {
 		},
 		error: function(e, type, message) {
 			message = message !== '' ? message : "Unknown";
-			error('Error while attempting to retrieve poke locations, reason: ' + message);
+			error('Error while attempting to retrieve Pokémon locations. Reason: ' + message);
 			console.log(arguments);
 			setTimeout(function(){
 				build_map_update(lastPosition);
