@@ -178,7 +178,10 @@ function seconds_to_hms(d) {
 	var h = Math.floor(d / 3600);
 	var m = Math.floor(d % 3600 / 60);
 	var s = Math.floor(d % 3600 % 60);
-	return ((h > 0 ? h + ' hours, ' : '') + m + ' minutes, ' + s + ' seconds');
+	var hours = (h == 1 ? ' hour, ' : ' hours, ');
+	var minutes = (m == 1 ? ' minute, ' : ' minutes, ');
+	var seconds = (s == 1 ? ' second' : ' seconds');
+	return ((h > 0 ? h + hours : '') + m + minutes + s + seconds);
 }
 function build_initial_map(location) {
 	//Your position
