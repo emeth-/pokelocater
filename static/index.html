@@ -24,6 +24,14 @@ body { height: 100%; margin: 0px; padding: 0px }
 #loader.show{
 	display:block;
 }
+#loader.green{
+	background-color:#0F0;
+	font-color:white;
+}
+#loader.red {
+	background-color:#F00;
+	font-color:white;
+}
 #control_panel, #loader{
 	z-index: 999;
 	position:fixed;
@@ -56,15 +64,20 @@ body { height: 100%; margin: 0px; padding: 0px }
 var pokes = {};
 var first_load = true;
 var player = null;
+var lastPosition = null;
 jQuery(function($) {
     // Asynchronously Load the map API 
     var script = document.createElement('script');
-    script.src = '//maps.googleapis.com/maps/api/js?key={{GMAPS_API_KEY}}&sensor=false&callback=map_api_loaded';
+    //script.src = '//maps.googleapis.com/maps/api/js?key={{GMAPS_API_KEY}}&sensor=false&callback=map_api_loaded';
+	script.src = '//maps.googleapis.com/maps/api/js?key=AIzaSyBARDF5CYQ0KFLobpsWooBKSt24UaHi55Y&sensor=false&callback=map_api_loaded';
 	document.body.appendChild(script);
 });
 
 function map_api_loaded() {
-    update_position();
+	setInterval(function(){
+		update_position();	
+	}, 5000);
+    
 }
 
 function add_player(position){
@@ -103,6 +116,7 @@ function add_pokemon(data){
 			p.data.longitude = data.longitude;
 			console.log("pokemon '" + data.name + "' moved!", p);
 		}
+		return;
 	}
 	
 	var content = function (data){
@@ -111,7 +125,7 @@ function add_pokemon(data){
 		'<p>will be there for another ' + get_time_left(data.date_left) + '.</p>' +        
 		'</div>'
 	}
-	var marker = add_marker(data, ico);
+	var marker = add_marker(data);
 	var listener = google.maps.event.addListener(marker, 'click', (function(marker, uid) {
 		var infoWindow = new google.maps.InfoWindow();
 		return function() {
@@ -132,7 +146,7 @@ function add_pokemon(data){
 	return pokemon;
 }
 function get_time_left(d){
-	var timeLeft = (new Date()).getTime() - d.getTime() / 1000;
+	var timeLeft = (d.getTime() - (new Date()).getTime()) / 1000;
 	return seconds_to_hsm(timeLeft);
 }
 function seconds_to_hsm(d) {
@@ -149,15 +163,27 @@ function build_initial_map(location) {
 	create_map(location);
 	build_map_update(location);
 }
-function show_loader(msg){
+function info(msg){
+	show_message(msg);
+}
+function error(msg){
+	show_message(msg, "red");
+}
+function success(msg){
+	show_message(msg, "green")
+}
+function show_message(msg, addClass){
 	$("#loader").addClass("show");
+	if(addClass !== undefined){
+		$("#loader").addClass(addClass);
+	}
 	if(msg === undefined){
 		msg = 'Please wait... searching for pokemon.';
 	}
 	$("#loader").html(msg);
 }
-function hide_loader(){
-	$("#loader").removeClass("show");
+function hide_message(){
+	$("#loader").removeClass("show").removeClass("green").removeClass("red");
 }
 function clear_pokemon(pokemon){
 	google.maps.event.removeListener(pokemon.listener);
@@ -184,27 +210,31 @@ function refresh_map(){
 	map.fitBounds(bounds);
 }
 function update_position(){
-	navigator.geolocation.getCurrentPosition(handler,
+	console.log("updating position");
+	navigator.geolocation.getCurrentPosition(update_player,
 		function(){
-			show_loader("failed to get gps location....");
+			error("failed to get gps location....");
 			console.log("failed to get gps location....");
 		}
-	,{timeout:10000});
+	,{timeout:30000});
 }
 function build_map_update(location) {
-	show_loader();
+	info();
 	var refreshRate = parseInt($("#refresh").val()) * 1000;
 	$.ajax({ 
 		type: 'POST', 
-		url: '/get_poke', 
+		url: 'https://chrestlerpokelocater.herokuapp.com/get_poke', 
 		data: {
 			location: location.coords.latitude.toString()+', '+location.coords.longitude.toString(),
 			direction: ""
 		}, 
 		dataType: 'json',
 		success: function (data) {
-			
-			hide_loader();
+			var count = data ? data.data.length : 0;
+			success("found " + count + " pokemon!");
+			setTimeout(function(){
+				hide_message();
+			}, 5000);
 			console.log("pokemon_data", data.data);
 
 			$.each(data.data, function(k, v) {
@@ -212,28 +242,25 @@ function build_map_update(location) {
 			});
 			refresh_map();
 			setTimeout(function(){
-				update_position();
+				build_map_update(lastPosition);
 			}, refreshRate);
 		},
 		error: function(e, type, message) {
-			show_loader('Error while attempting to retrieve poke locations, reason:' + message);
+			error('Error while attempting to retrieve poke locations, reason:' + message);
 			console.log(arguments);
 			setTimeout(function(){
-				hide_loader();
-				update_position();
+				hide_message();
+				build_map_update(lastPosition);
 			}, 5000);
 		}
 	});
 }
-
-function handler(location) {
-	if (first_load) {
-        build_initial_map(location);
-    }
-	else {
-		build_map_update(location);
-	}
+function update_player(location){
+	lastPosition = location;
 	var position = new google.maps.LatLng(location.coords.latitude, location.coords.longitude);
+	if(map == null){
+		build_initial_map(location);
+	}
 	if(player === null){
 		player = add_player(position);
 	}else{
@@ -255,11 +282,6 @@ function create_map(location) {
     // Display a map on the page
     map = new google.maps.Map(document.getElementById("map_canvas"), mapOptions);
     map.setTilt(45);
-    // Override our map zoom level once our fitBounds function runs (Make sure it only runs once)
-    var boundsListener = google.maps.event.addListener((map), 'bounds_changed', function(event) {
-        map.setZoom(17);
-        //google.maps.event.removeListener(boundsListener);
-    });
 }
 
 </script>
