@@ -65,6 +65,7 @@ var pokes = {};
 var first_load = true;
 var player = null;
 var lastPosition = null;
+var lastMessage = null;
 jQuery(function($) {
     // Asynchronously Load the map API 
     var script = document.createElement('script');
@@ -128,8 +129,15 @@ function add_pokemon(data){
 	var listener = google.maps.event.addListener(marker, 'click', (function(marker, uid) {
 		var infoWindow = new google.maps.InfoWindow();
 		return function() {
-			infoWindow.setContent(pokes[uid].content(pokes[uid].data));
 			infoWindow.open(map, marker);
+			var interval = setInterval(function(){
+				infoWindow.setContent(pokes[uid].content(pokes[uid].data));
+			}, 1000);
+			//close window after 5 seconds.
+			setTimeout(function(){
+				clearInterval(interval);
+				infoWindow.close();
+			}, 5000);
 		}
 	})(marker, data.uid));
 	
@@ -170,6 +178,9 @@ function error(msg){
 }
 function success(msg){
 	show_message(msg, "green")
+}
+function get_message(){
+	return $("#loader").html();
 }
 function show_message(msg, addClass){
 	$("#loader").removeClass("green").removeClass("red").addClass("show");
@@ -212,6 +223,7 @@ function update_position(){
 	console.log("updating position");
 	navigator.geolocation.getCurrentPosition(update_player,
 		function(){
+			lastMessage = get_message();
 			error("failed to get gps location....");
 			console.log("failed to get gps location....");
 		}
@@ -256,6 +268,10 @@ function build_map_update(location) {
 	});
 }
 function update_player(location){
+	if(lastMessage !== null){
+		show_message(lastMessage);
+		lastMessage = null;
+	}
 	lastPosition = location;
 	var position = new google.maps.LatLng(location.coords.latitude, location.coords.longitude);
 	if(map == null){
